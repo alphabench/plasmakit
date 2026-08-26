@@ -29,8 +29,11 @@ in m^2, reactivities in m^3/s, power densities in W/m^3, lengths in m.
 """
 
 from fusionbench.benchmarks import BenchmarkReport, validate
+from fusionbench.blanket import Blanket, Layer
 from fusionbench.cross_sections import cross_section
 from fusionbench.geometry import TokamakGeometry
+from fusionbench.materials import MATERIALS, Material
+from fusionbench.neutronics import BlanketResult, TallyValue
 from fusionbench.plasma import PlasmaState
 from fusionbench.profiles import PlasmaProfiles, RadialProfile
 from fusionbench.provenance import Provenance
@@ -54,8 +57,13 @@ from fusionbench.spectra import (
 __version__ = "0.1.0"
 
 __all__ = [
+    "MATERIALS",
     "REACTIONS",
     "BenchmarkReport",
+    "Blanket",
+    "BlanketResult",
+    "Layer",
+    "Material",
     "NeutronSource",
     "NeutronSpectrum",
     "PlasmaProfiles",
@@ -66,6 +74,7 @@ __all__ = [
     "Reaction",
     "SourceTerms",
     "SpatialNeutronSource",
+    "TallyValue",
     "TokamakGeometry",
     "__version__",
     "cross_section",

@@ -31,6 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   spectra; openmc via conda), `to_xarray()` (optional `[xarray]` extra),
   and `to_vtk()` (pure-NumPy legacy VTK writer).
 - Vectorized `neutron_std` alongside `neutron_mean_energy`.
+- Fusion materials registry (`Material`, `MATERIALS`): tungsten,
+  beryllium, EUROFER97, Li4SiO4 and Pb-17Li with Li-6 enrichment, water,
+  helium — cited densities and compositions, atom/weight fraction
+  handling, atom densities.
+- Blanket neutronics: `Layer`/`Blanket` (concentric torus shells with
+  analytic volumes), `Blanket.run_neutronics` via OpenMC (ZTorus
+  geometry, ring sources with local Brysk spectra) returning
+  `BlanketResult` — TBR, neutron wall load, per-layer energy deposition
+  and tritium production, NRT DPA — each with Monte Carlo uncertainty
+  and a provenance chain including the nuclear-data library.
 
 ### Changed
 

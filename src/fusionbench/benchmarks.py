@@ -13,8 +13,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from fusionbench import bosch_hale, geometry, spectra
+from fusionbench import bosch_hale, geometry, materials, neutronics, spectra
+from fusionbench.blanket import Blanket, Layer
 from fusionbench.geometry import TokamakGeometry
+from fusionbench.materials import eurofer97, li4sio4, pbli, tungsten
+from fusionbench.neutronics import nrt_dpa_rate
 from fusionbench.plasma import PlasmaState
 from fusionbench.profiles import PlasmaProfiles, RadialProfile
 from fusionbench.provenance import Provenance, build_provenance
@@ -148,6 +151,17 @@ def _dt_power_density() -> float:
     return float(fusion_power_density(state, reactions=["DT"]))
 
 
+def _demo_blanket() -> Blanket:
+    return Blanket(
+        layers=(
+            Layer("first_wall", eurofer97(), 0.5),
+            Layer("breeder", li4sio4(), 0.5),
+        ),
+        major_radius=6.0,
+        first_wall_radius=2.0,
+    )
+
+
 def _flat_profiles(density_center: float = 1.0e20, density_edge: float = 1.0e20) -> PlasmaProfiles:
     return PlasmaProfiles(
         ion_temperature=RadialProfile.parabolic(10.0, 10.0),
@@ -273,6 +287,61 @@ CASES: tuple[BenchmarkCase, ...] = (
         compute=_flat_profile_dt_rate,
     ),
     BenchmarkCase(
+        name="Blanket torus-shell volume (R0=6, r 2->3 m)",
+        reference="Pappus theorem, V = 2 pi^2 R0 (r_out^2 - r_in^2)",
+        reference_value=2.0 * np.pi**2 * 6.0 * (9.0 - 4.0),
+        unit="m^3",
+        rtol=1e-9,
+        compute=lambda: sum(_demo_blanket().layer_volumes()),
+    ),
+    BenchmarkCase(
+        name="First-wall torus area (R0=6, r_fw=2 m)",
+        reference="Torus surface area A = 4 pi^2 R0 r",
+        reference_value=4.0 * np.pi**2 * 6.0 * 2.0,
+        unit="m^2",
+        rtol=1e-9,
+        compute=lambda: _demo_blanket().first_wall_area(),
+    ),
+    BenchmarkCase(
+        name="Pb-17Li lithium atom fraction",
+        reference="Eutectic Pb-17Li (E. Mas de les Valls et al., J. Nucl. Mater. 376 (2008) 353)",
+        reference_value=0.17,
+        unit="",
+        rtol=1e-6,
+        compute=lambda: sum(
+            fraction
+            for species, fraction in pbli().atom_fractions().items()
+            if species.startswith("Li")
+        ),
+    ),
+    BenchmarkCase(
+        name="Li4SiO4 natural Li-6 atom fraction",
+        reference="CIAAW isotopic abundance of Li-6 (7.59 at%) over 4 Li per 9 atoms",
+        reference_value=4.0 / 9.0 * 0.0759,
+        unit="",
+        rtol=1e-3,
+        compute=lambda: li4sio4().atom_fractions()["Li6"],
+    ),
+    BenchmarkCase(
+        name="Tungsten atom number density",
+        reference="rho N_A / A with CRC density 19.30 g/cm^3, A = 183.84 g/mol",
+        reference_value=6.322e28,
+        unit="m^-3",
+        rtol=1e-3,
+        compute=lambda: tungsten().atom_density,
+    ),
+    BenchmarkCase(
+        name="NRT displacements per 1 keV damage energy (E_d=40 eV)",
+        reference=(
+            "M.J. Norgett, M.T. Robinson and I.M. Torrens, Nucl. Eng. Des. 33 (1975) 50: "
+            "0.8 E_dam / (2 E_d)"
+        ),
+        reference_value=10.0,
+        unit="displacements",
+        rtol=1e-9,
+        compute=lambda: nrt_dpa_rate(1000.0, 1.0),
+    ),
+    BenchmarkCase(
         name="Parabolic-density total DT rate",
         reference=(
             "Hand calculation: closed-form integral of n0^2(1 - c rho^2)^2 over a circular "
@@ -321,7 +390,13 @@ def validate(verbose: bool = True) -> BenchmarkReport:
     report = BenchmarkReport(
         results=tuple(run_case(case) for case in CASES),
         provenance=build_provenance(
-            models=[bosch_hale.MODEL_ID, spectra.MODEL_ID, geometry.MODEL_ID],
+            models=[
+                bosch_hale.MODEL_ID,
+                spectra.MODEL_ID,
+                geometry.MODEL_ID,
+                materials.MODEL_ID,
+                neutronics.MODEL_ID,
+            ],
             inputs={"cases": len(CASES)},
         ),
     )

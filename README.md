@@ -94,6 +94,47 @@ ring. OpenMC itself is not on PyPI; install it via conda-forge.
 Users with equilibrium-code output can use
 `SpatialNeutronSource.from_rz(r_edges, z_edges, T_field, n_field)` instead.
 
+## Blanket neutronics
+
+Close the loop from plasma to tritium breeding. Describe a layered
+blanket with built-in, literature-cited materials and run an OpenMC
+transport calculation against any fusionbench source:
+
+```python
+import fusionbench as fb
+from fusionbench.materials import beryllium, eurofer97, li4sio4, tungsten
+
+blanket = fb.Blanket(
+    layers=(
+        fb.Layer("armor", tungsten(), 0.002),
+        fb.Layer("first_wall", eurofer97(), 0.02),
+        fb.Layer("multiplier", beryllium(), 0.05),
+        fb.Layer("breeder", li4sio4(li6_enrichment=0.60), 0.50),
+        fb.Layer("shield", eurofer97(), 0.10),
+    ),
+    major_radius=9.0,
+    first_wall_radius=2.9,
+)
+
+plasma = fb.PlasmaState(ion_temperature=15.0, ion_density=1.0e20, fuel={"D": 0.5, "T": 0.5})
+result = blanket.run_neutronics(plasma, source_rate=1.0e20)  # needs openmc + nuclear data
+
+result.tbr  # tritium breeding ratio, with MC uncertainty
+result.neutron_wall_load  # MW/m^2
+result.energy_deposition  # W per layer
+result.tritium_production  # atoms/s per layer
+result.dpa_per_fpy  # first-wall displacement dose per full-power year
+result.provenance  # chains source models, nuclear data library, seeds
+```
+
+Layers are concentric circular torus shells (a documented approximation
+for shaped plasmas — `Blanket.from_geometry` encloses a Miller LCFS
+conservatively). Every quantity carries its Monte Carlo standard
+deviation; DPA uses the NRT model (E_d = 40 eV, configurable). OpenMC
+and a cross-section library are required only for `run_neutronics` —
+install OpenMC from conda-forge and point `OPENMC_CROSS_SECTIONS` at a
+data library.
+
 ## Validate the physics
 
 Every physics model in the package ships with a benchmark suite comparing
