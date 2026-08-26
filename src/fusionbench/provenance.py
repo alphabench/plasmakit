@@ -18,6 +18,11 @@ MODEL_REFERENCES: Mapping[str, str] = MappingProxyType(
         "brysk-1973": (
             "H. Brysk, 'Fusion neutron energies and spectra', Plasma Physics 15 (1973) 611"
         ),
+        "miller-1998": (
+            "R.L. Miller, M.S. Chu, J.M. Greene, Y.R. Lin-Liu and R.E. Waltz, "
+            "'Noncircular, finite aspect ratio, local equilibrium model', "
+            "Physics of Plasmas 5 (1998) 973"
+        ),
     }
 )
 """Full citations for every physics model identifier used in the package."""
