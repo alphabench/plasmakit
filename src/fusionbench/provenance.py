@@ -22,6 +22,21 @@ MODEL_REFERENCES: Mapping[str, str] = MappingProxyType(
             "T. Prohaska et al., 'Standard atomic weights of the elements 2021 "
             "(IUPAC Technical Report)', Pure and Applied Chemistry 94 (2022) 573"
         ),
+        "abdou-1986": (
+            "M.A. Abdou, E.L. Vold, C.Y. Gung, M.Z. Youssef and K. Shin, "
+            "'Deuterium-tritium fuel self-sufficiency in fusion reactors', "
+            "Fusion Technology 9 (1986) 250"
+        ),
+        "abdou-2021": (
+            "M. Abdou, M. Riva, A. Ying, C. Day, A. Loarte, L.R. Baylor, P. Humrickhouse, "
+            "T.F. Fuerst and S. Cho, 'Physics and technology considerations for the "
+            "deuterium-tritium fuel cycle and conditions for tritium fuel self-sufficiency', "
+            "Nuclear Fusion 61 (2021) 013001"
+        ),
+        "lucas-unterweger-2000": (
+            "L.L. Lucas and M.P. Unterweger, 'Comprehensive review and critical evaluation "
+            "of the half-life of tritium', Journal of Research of NIST 105 (2000) 541"
+        ),
         "sobol-qmc": (
             "I.M. Sobol', 'On the distribution of points in a cube and the approximate "
             "evaluation of integrals', USSR Comput. Math. Math. Phys. 7 (1967) 86; "

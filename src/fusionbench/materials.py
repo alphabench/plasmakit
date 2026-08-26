@@ -27,6 +27,7 @@ ATOMIC_MASS_U: Final[Mapping[str, float]] = MappingProxyType(
     {
         "H": 1.008,
         "He": 4.0026,
+        "H3": 3.0160492,
         "Li": 6.94,
         "Li6": 6.0151228,
         "Li7": 7.0160034,
