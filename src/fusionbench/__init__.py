@@ -32,6 +32,7 @@ from fusionbench.benchmarks import BenchmarkReport, validate
 from fusionbench.blanket import Blanket, Layer
 from fusionbench.cross_sections import cross_section
 from fusionbench.distributions import Distribution
+from fusionbench.estimation import Posterior, fit
 from fusionbench.geometry import TokamakGeometry
 from fusionbench.materials import MATERIALS, Material
 from fusionbench.neutronics import BlanketResult, TallyValue
@@ -79,6 +80,7 @@ __all__ = [
     "NeutronSpectrum",
     "PlasmaProfiles",
     "PlasmaState",
+    "Posterior",
     "PowerPartition",
     "Provenance",
     "RadialProfile",
@@ -92,6 +94,7 @@ __all__ = [
     "UncertainResult",
     "__version__",
     "cross_section",
+    "fit",
     "fusion_power_density",
     "maxwellian_reactivity",
     "neutron_mean_energy",

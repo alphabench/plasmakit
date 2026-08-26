@@ -181,6 +181,21 @@ def _ishigami_indices() -> Any:
     )
 
 
+def _conjugate_posterior_mean() -> float:
+    from fusionbench.estimation import fit
+
+    posterior = fit(
+        lambda mu: mu,
+        {"mu": Distribution.normal(0.0, 1.0)},
+        observed=2.0,
+        noise_std=1.0,
+        n_samples=20_000,
+        burn_in=2000,
+        seed=0,
+    )
+    return posterior.mean("mu")
+
+
 def _gp_sin_recovery() -> float:
     from fusionbench.surrogates import GaussianProcess
 
@@ -405,6 +420,17 @@ CASES: tuple[BenchmarkCase, ...] = (
         unit="",
         rtol=5e-2,
         compute=lambda: _ishigami_indices().first_order["x1"],
+    ),
+    BenchmarkCase(
+        name="MH posterior mean (conjugate normal-normal)",
+        reference=(
+            "Analytic conjugacy: prior N(0,1), observation 2.0 with noise 1 "
+            "gives posterior N(1, 1/2)"
+        ),
+        reference_value=1.0,
+        unit="",
+        rtol=5e-2,
+        compute=_conjugate_posterior_mean,
     ),
     BenchmarkCase(
         name="GP surrogate recovery of sin(1.0)",
