@@ -53,6 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   global/surrogate-assisted optimization (`optimize`,
   `optimize_surrogate` wrapping differential evolution).
 
+- Tritium fuel cycle (`TritiumCycle`, `CycleHistory`): linear
+  four-compartment model after Abdou et al. solved exactly by matrix
+  exponential, with steady states, self-sufficiency, doubling time,
+  required startup inventory, coupling from fusion power or blanket
+  transport results, and five analytic benchmark cases (half-life
+  decay, closed-form steady state, mass conservation, accumulation
+  rate, doubling time).
+
 ### Changed
 
 - NumPy requirement raised to `>=2.0`; SciPy `>=1.11` added.

@@ -57,6 +57,7 @@ from fusionbench.spectra import (
     neutron_std,
 )
 from fusionbench.surrogates import GaussianProcess, Surrogate
+from fusionbench.tritium import CycleHistory, TritiumCycle
 from fusionbench.uncertainty import (
     SobolIndices,
     UncertainResult,
@@ -73,6 +74,7 @@ __all__ = [
     "BenchmarkReport",
     "Blanket",
     "BlanketResult",
+    "CycleHistory",
     "Distribution",
     "GaussianProcess",
     "Layer",
@@ -93,6 +95,7 @@ __all__ = [
     "Surrogate",
     "TallyValue",
     "TokamakGeometry",
+    "TritiumCycle",
     "UncertainResult",
     "__version__",
     "cross_section",

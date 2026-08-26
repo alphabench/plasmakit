@@ -135,6 +135,47 @@ and a cross-section library are required only for `run_neutronics` —
 install OpenMC from conda-forge and point `OPENMC_CROSS_SECTIONS` at a
 data library.
 
+## Tritium fuel cycle
+
+TBR > 1 is necessary but not sufficient — a plant must also keep its
+tritium inventory alive against decay, recirculation losses, and the
+huge unburned-fuel loop. `TritiumCycle` is a linear compartment model
+(blanket → processing → storage → plasma exhaust, after Abdou et al.)
+solved exactly by matrix exponential:
+
+```python
+import fusionbench as fb
+
+cycle = fb.TritiumCycle.from_blanket_result(  # chains from run_neutronics
+    result,
+    fractional_burnup=0.02,
+    startup_inventory=5.0,  # kg
+)
+
+cycle.self_sufficient  # does storage accumulate at steady state?
+cycle.doubling_time()  # days to bank a second plant's startup inventory
+cycle.required_startup_inventory(days=3650.0)  # kg to survive a 10-year horizon
+cycle.simulate(days=365.0 * 5).inventory("storage")  # kg vs time
+```
+
+`TritiumCycle.from_fusion_power(500.0, tbr=1.1, ...)` starts from a
+plant power instead. Units: durations in days, rates in atoms/s,
+inventories in kg. Because every method returns plain floats, the UQ
+toolbox applies directly — for example, propagating TBR and burnup
+uncertainty into the required startup inventory:
+
+```python
+result = fb.propagate(
+    lambda tbr, fractional_burnup: fb.TritiumCycle(
+        burn_rate=1e20, tbr=tbr, fractional_burnup=fractional_burnup, startup_inventory=0.0
+    ).required_startup_inventory(),
+    {
+        "tbr": fb.Distribution.normal(1.05, 0.02),
+        "fractional_burnup": fb.Distribution.uniform(0.01, 0.05),
+    },
+)
+```
+
 ## Uncertainty quantification and optimization
 
 Reactor parameters are never known exactly. Give any input a
@@ -252,6 +293,9 @@ those ranges the package still returns the fit's value but emits a
 - R.L. Miller, M.S. Chu, J.M. Greene, Y.R. Lin-Liu and R.E. Waltz,
   "Noncircular, finite aspect ratio, local equilibrium model",
   *Physics of Plasmas* **5** (1998) 973.
+- M.A. Abdou et al., "Deuterium-tritium fuel self-sufficiency in fusion
+  reactors", *Fusion Technology* **9** (1986) 250; M. Abdou et al.,
+  *Nuclear Fusion* **61** (2021) 013001.
 
 ## Development
 
