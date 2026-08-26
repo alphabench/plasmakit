@@ -10,11 +10,13 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
-from fusionbench import bosch_hale, geometry, materials, neutronics, spectra
+from fusionbench import bosch_hale, geometry, materials, neutronics, spectra, uncertainty
 from fusionbench.blanket import Blanket, Layer
+from fusionbench.distributions import Distribution
 from fusionbench.geometry import TokamakGeometry
 from fusionbench.materials import eurofer97, li4sio4, pbli, tungsten
 from fusionbench.neutronics import nrt_dpa_rate
@@ -149,6 +151,34 @@ def _dt_peak_location() -> float:
 def _dt_power_density() -> float:
     state = PlasmaState(ion_temperature=10.0, ion_density=1.0e20, fuel={"D": 0.5, "T": 0.5})
     return float(fusion_power_density(state, reactions=["DT"]))
+
+
+def _identity_propagation() -> Any:
+    from fusionbench.uncertainty import propagate
+
+    return propagate(
+        lambda x: x,
+        {"x": Distribution.normal(10.0, 2.0)},
+        n_samples=4096,
+        seed=0,
+        vectorized=True,
+    )
+
+
+def _ishigami_indices() -> Any:
+    from fusionbench.uncertainty import sobol_indices
+
+    def ishigami(x1: np.ndarray, x2: np.ndarray, x3: np.ndarray) -> np.ndarray:
+        return np.sin(x1) + 7.0 * np.sin(x2) ** 2 + 0.1 * x3**4 * np.sin(x1)
+
+    bounds = Distribution.uniform(-np.pi, np.pi)
+    return sobol_indices(
+        ishigami,
+        {"x1": bounds, "x2": bounds, "x3": bounds},
+        n_samples=4096,
+        seed=0,
+        vectorized=True,
+    )
 
 
 def _demo_blanket() -> Blanket:
@@ -342,6 +372,41 @@ CASES: tuple[BenchmarkCase, ...] = (
         compute=lambda: nrt_dpa_rate(1000.0, 1.0),
     ),
     BenchmarkCase(
+        name="QMC propagation mean (identity, N(10, 2))",
+        reference="Analytic: mean of the identity map equals the input mean",
+        reference_value=10.0,
+        unit="",
+        rtol=1e-3,
+        compute=lambda: _identity_propagation().mean,
+    ),
+    BenchmarkCase(
+        name="QMC propagation std (identity, N(10, 2))",
+        reference="Analytic: std of the identity map equals the input std",
+        reference_value=2.0,
+        unit="",
+        rtol=1e-2,
+        compute=lambda: _identity_propagation().std,
+    ),
+    BenchmarkCase(
+        name="Ishigami first-order index S1",
+        reference=(
+            "Analytic (a=7, b=0.1): S1 = (1/2)(1 + b pi^4/5)^2 / V = 0.31391 "
+            "(Saltelli et al., Comput. Phys. Commun. 181 (2010) 259)"
+        ),
+        reference_value=0.31391,
+        unit="",
+        rtol=5e-2,
+        compute=lambda: _ishigami_indices().first_order["x1"],
+    ),
+    BenchmarkCase(
+        name="Ishigami first-order index S2",
+        reference="Analytic (a=7, b=0.1): S2 = (a^2/8) / V = 0.44241",
+        reference_value=0.44241,
+        unit="",
+        rtol=5e-2,
+        compute=lambda: _ishigami_indices().first_order["x2"],
+    ),
+    BenchmarkCase(
         name="Parabolic-density total DT rate",
         reference=(
             "Hand calculation: closed-form integral of n0^2(1 - c rho^2)^2 over a circular "
@@ -396,6 +461,8 @@ def validate(verbose: bool = True) -> BenchmarkReport:
                 geometry.MODEL_ID,
                 materials.MODEL_ID,
                 neutronics.MODEL_ID,
+                uncertainty.MODEL_ID,
+                uncertainty.SALTELLI_MODEL_ID,
             ],
             inputs={"cases": len(CASES)},
         ),

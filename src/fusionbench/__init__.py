@@ -31,6 +31,7 @@ in m^2, reactivities in m^3/s, power densities in W/m^3, lengths in m.
 from fusionbench.benchmarks import BenchmarkReport, validate
 from fusionbench.blanket import Blanket, Layer
 from fusionbench.cross_sections import cross_section
+from fusionbench.distributions import Distribution
 from fusionbench.geometry import TokamakGeometry
 from fusionbench.materials import MATERIALS, Material
 from fusionbench.neutronics import BlanketResult, TallyValue
@@ -53,6 +54,13 @@ from fusionbench.spectra import (
     neutron_spectrum,
     neutron_std,
 )
+from fusionbench.uncertainty import (
+    SobolIndices,
+    UncertainResult,
+    propagate,
+    propagate_transport,
+    sobol_indices,
+)
 
 __version__ = "0.1.0"
 
@@ -62,6 +70,7 @@ __all__ = [
     "BenchmarkReport",
     "Blanket",
     "BlanketResult",
+    "Distribution",
     "Layer",
     "Material",
     "NeutronSource",
@@ -72,10 +81,12 @@ __all__ = [
     "Provenance",
     "RadialProfile",
     "Reaction",
+    "SobolIndices",
     "SourceTerms",
     "SpatialNeutronSource",
     "TallyValue",
     "TokamakGeometry",
+    "UncertainResult",
     "__version__",
     "cross_section",
     "fusion_power_density",
@@ -84,6 +95,9 @@ __all__ = [
     "neutron_spectrum",
     "neutron_std",
     "power_partition",
+    "propagate",
+    "propagate_transport",
     "reaction_rate_density",
+    "sobol_indices",
     "validate",
 ]

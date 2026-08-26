@@ -22,6 +22,31 @@ MODEL_REFERENCES: Mapping[str, str] = MappingProxyType(
             "T. Prohaska et al., 'Standard atomic weights of the elements 2021 "
             "(IUPAC Technical Report)', Pure and Applied Chemistry 94 (2022) 573"
         ),
+        "sobol-qmc": (
+            "I.M. Sobol', 'On the distribution of points in a cube and the approximate "
+            "evaluation of integrals', USSR Comput. Math. Math. Phys. 7 (1967) 86; "
+            "scrambling: A.B. Owen, 'Scrambling Sobol and Niederreiter-Xing points', "
+            "J. Complexity 14 (1998) 466"
+        ),
+        "saltelli-2010": (
+            "A. Saltelli, P. Annoni, I. Azzini, F. Campolongo, M. Ratto and S. Tarantola, "
+            "'Variance based sensitivity analysis of model output. Design and estimator for "
+            "the total sensitivity index', Computer Physics Communications 181 (2010) 259"
+        ),
+        "metropolis-hastings": (
+            "N. Metropolis, A.W. Rosenbluth, M.N. Rosenbluth, A.H. Teller and E. Teller, "
+            "J. Chem. Phys. 21 (1953) 1087; W.K. Hastings, 'Monte Carlo sampling methods "
+            "using Markov chains and their applications', Biometrika 57 (1970) 97"
+        ),
+        "gp-rbf": (
+            "C.E. Rasmussen and C.K.I. Williams, 'Gaussian Processes for Machine Learning', "
+            "MIT Press (2006)"
+        ),
+        "storn-price-1997": (
+            "R. Storn and K. Price, 'Differential evolution - a simple and efficient "
+            "heuristic for global optimization over continuous spaces', "
+            "Journal of Global Optimization 11 (1997) 341"
+        ),
         "nrt-1975": (
             "M.J. Norgett, M.T. Robinson and I.M. Torrens, 'A proposed method of "
             "calculating displacement dose rates', Nuclear Engineering and Design 33 (1975) 50"
