@@ -25,6 +25,11 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+[project.urls]
+Homepage = "https://github.com/alphabench/fusionbench"
+Repository = "https://github.com/alphabench/fusionbench"
+Changelog = "https://github.com/alphabench/fusionbench/blob/main/CHANGELOG.md"
+
 # openmc is intentionally not an extra: it is not distributed on PyPI.
 # Install it via conda-forge to use SpatialNeutronSource.to_openmc().
 [project.optional-dependencies]
