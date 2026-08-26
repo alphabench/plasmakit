@@ -38,6 +38,7 @@ from typing import Any, Final
 import numpy as np
 import numpy.typing as npt
 import scipy.linalg
+import scipy.optimize
 
 from fusionbench.constants import AVOGADRO, ArrayLike, as_float64, scalar_like
 from fusionbench.errors import FusionbenchError
@@ -282,6 +283,129 @@ class TritiumCycle:
         return MappingProxyType(
             {name: float(atoms_to_kg(atoms[j])) for j, name in enumerate(COMPARTMENTS)}
         )
+
+    def _state_at(
+        self, t_seconds: float, initial: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
+        """Evaluate the exact affine flow at one time (atoms)."""
+        matrix, source = self._system()
+        augmented = np.zeros((5, 5))
+        augmented[:4, :4] = matrix * t_seconds
+        augmented[:4, 4] = source * t_seconds
+        flow = as_float64(scipy.linalg.expm(augmented))
+        return as_float64(flow[:4, :4] @ initial + flow[:4, 4])
+
+    def accumulation_rate(self) -> float:
+        """Net storage accumulation rate at upstream steady state, kg/day.
+
+        Closed form (excluding storage's own decay)::
+
+            a = (1-eps)/(1+lam tau_E) * [eta TBR/(1+lam tau_B)
+                + (1-f_b)/(f_b (1+lam tau_P))] * N_b  -  N_b/f_b
+
+        which reduces to ``(TBR - 1) N_b`` for a lossless, decay-free
+        cycle. Negative values signal a tritium deficit.
+        """
+        lam = self.decay_constant
+        tau_b = self.blanket_residence_days * SECONDS_PER_DAY
+        tau_p = self.exhaust_residence_days * SECONDS_PER_DAY
+        tau_e = self.processing_residence_days * SECONDS_PER_DAY
+        f_b = self.fractional_burnup
+        atoms_per_s = (1.0 - self.processing_loss) / (1.0 + lam * tau_e) * (
+            self.extraction_efficiency * self.tbr / (1.0 + lam * tau_b)
+            + (1.0 - f_b) / (f_b * (1.0 + lam * tau_p))
+        ) * self.burn_rate - self.burn_rate / f_b
+        return atoms_per_s * KG_PER_ATOM * SECONDS_PER_DAY
+
+    @property
+    def self_sufficient(self) -> bool:
+        """Whether storage accumulates tritium at steady state."""
+        return self.accumulation_rate() > 0.0
+
+    def doubling_time(self, *, max_days: float = 36_500.0) -> float | None:
+        """Days until the storage inventory first reaches twice its start.
+
+        The classic figure of merit: time to accumulate a second plant's
+        startup inventory. Returns ``None`` if storage never doubles
+        within ``max_days`` (increase the horizon for slowly-accumulating
+        cycles; a cycle with negative :meth:`accumulation_rate` never
+        doubles).
+        """
+        if self.startup_inventory <= 0.0:
+            raise FusionbenchError("doubling_time requires a positive startup_inventory")
+        initial = self._initial_atoms()
+        target = 2.0 * initial[3]
+        history_atoms = np.array(
+            [
+                float(kg_to_atoms(v))
+                for v in self.simulate(days=max_days, n_points=4001).inventory("storage")
+            ]
+        )
+        above = np.nonzero(history_atoms >= target)[0]
+        if above.size == 0:
+            return None
+        first = int(above[0])
+        if first == 0:
+            return 0.0
+        grid = np.linspace(0.0, max_days, 4001)
+
+        def excess(t_days: float) -> float:
+            return float(self._state_at(t_days * SECONDS_PER_DAY, initial)[3] - target)
+
+        return float(
+            scipy.optimize.brentq(excess, grid[first - 1], grid[first], xtol=1e-9 * max_days)
+        )
+
+    def required_startup_inventory(self, *, days: float = 3650.0) -> float:
+        """Minimum startup inventory (kg) keeping storage above the reserve.
+
+        Exact via superposition: storage from startup ``I0`` obeys
+        ``I_S(t; I0) = I0 exp(-lam t) + I_S(t; 0)``, so the constraint
+        ``I_S >= reserve_inventory`` over ``[0, days]`` gives
+        ``I0 = max(0, max_t (reserve - I_S(t; 0)) exp(+lam t))``.
+
+        The horizon is intrinsic: for a cycle that is not self-sufficient
+        the requirement grows without bound as ``days`` increases — the
+        physically correct statement that such a plant needs external
+        tritium supply indefinitely.
+        """
+        if days <= 0.0:
+            raise FusionbenchError("days must be positive")
+        zero_start = np.zeros(4)
+        reserve_atoms = float(kg_to_atoms(self.reserve_inventory))
+        lam = self.decay_constant
+        grid = np.linspace(0.0, days, 4001)
+        matrix, source = self._system()
+        dt = days * SECONDS_PER_DAY / (grid.size - 1)
+        augmented = np.zeros((5, 5))
+        augmented[:4, :4] = matrix * dt
+        augmented[:4, 4] = source * dt
+        flow = as_float64(scipy.linalg.expm(augmented))
+        step, offset = flow[:4, :4], flow[:4, 4]
+        state = zero_start.copy()
+        storage = np.empty(grid.size)
+        storage[0] = 0.0
+        for i in range(1, grid.size):
+            state = step @ state + offset
+            storage[i] = state[3]
+
+        def requirement(t_days: float, storage_atoms: float) -> float:
+            return (reserve_atoms - storage_atoms) * math.exp(lam * t_days * SECONDS_PER_DAY)
+
+        needs = np.array(
+            [requirement(t, s) for t, s in zip(grid.tolist(), storage.tolist(), strict=True)]
+        )
+        peak = int(np.argmax(needs))
+        low = grid[max(0, peak - 1)]
+        high = grid[min(grid.size - 1, peak + 1)]
+
+        def negated(t_days: float) -> float:
+            storage_atoms = float(self._state_at(t_days * SECONDS_PER_DAY, zero_start)[3])
+            return -requirement(t_days, storage_atoms)
+
+        refined = scipy.optimize.minimize_scalar(negated, bounds=(low, high), method="bounded")
+        best_atoms = max(float(np.max(needs)), -float(refined.fun))
+        return max(0.0, best_atoms * KG_PER_ATOM)
 
     @property
     def provenance(self) -> Provenance:

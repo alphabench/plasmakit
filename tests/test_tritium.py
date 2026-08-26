@@ -1,6 +1,9 @@
 import json
 
+import numpy as np
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from fusionbench.errors import FusionbenchError
 from fusionbench.tritium import (
@@ -119,6 +122,149 @@ def test_history_interface(cycle):
     with pytest.raises(FusionbenchError):
         history.inventory("divertor")
     json.dumps(history.to_dict())
+
+
+def test_accumulation_rate_lossless_limit():
+    # eta=1, eps=0, lam=0: a = (TBR - 1) * N_b exactly
+    cycle = TritiumCycle(
+        burn_rate=1e20,
+        tbr=1.15,
+        fractional_burnup=0.05,
+        startup_inventory=1.0,
+        decay_constant=0.0,
+    )
+    expected = 0.15 * 1e20 * float(atoms_to_kg(1.0)) * SECONDS_PER_DAY
+    assert cycle.accumulation_rate() == pytest.approx(expected, rel=1e-12)
+    assert cycle.self_sufficient
+
+
+def test_deficit_cycle_not_self_sufficient():
+    cycle = TritiumCycle(burn_rate=1e20, tbr=0.9, fractional_burnup=0.05, startup_inventory=5.0)
+    assert cycle.accumulation_rate() < 0.0
+    assert not cycle.self_sufficient
+    assert cycle.doubling_time() is None
+
+
+def test_doubling_time_matches_linear_limit():
+    cycle = TritiumCycle(
+        burn_rate=1e20,
+        tbr=1.15,
+        fractional_burnup=0.05,
+        startup_inventory=1.0,
+        blanket_residence_days=1e-4,
+        exhaust_residence_days=1e-4,
+        processing_residence_days=1e-4,
+        decay_constant=0.0,
+    )
+    a_atoms = 0.15 * 1e20
+    expected_days = float(kg_to_atoms(1.0)) / a_atoms / SECONDS_PER_DAY
+    # exact value exceeds the naive linear estimate by the pipeline-fill
+    # (in-transit inventory) lag, small for these short residence times
+    assert cycle.doubling_time() == pytest.approx(expected_days, rel=1e-3)
+    assert cycle.doubling_time() > expected_days
+
+
+def test_doubling_time_decreases_with_tbr():
+    def doubling(tbr):
+        return TritiumCycle(
+            burn_rate=1e20, tbr=tbr, fractional_burnup=0.05, startup_inventory=1.0
+        ).doubling_time()
+
+    fast, slow = doubling(1.3), doubling(1.05)
+    assert fast is not None and slow is not None
+    assert fast < slow
+
+
+def test_doubling_time_requires_startup():
+    cycle = TritiumCycle(burn_rate=1e20, tbr=1.2, fractional_burnup=0.05, startup_inventory=0.0)
+    with pytest.raises(FusionbenchError):
+        cycle.doubling_time()
+
+
+def test_required_startup_inventory_re_simulated():
+    from dataclasses import replace
+
+    cycle = TritiumCycle(
+        burn_rate=1e20,
+        tbr=0.95,
+        fractional_burnup=0.05,
+        startup_inventory=0.0,
+        reserve_inventory=0.5,
+    )
+    needed = cycle.required_startup_inventory(days=365.0)
+    assert needed > 0.0
+    refit = replace(cycle, startup_inventory=needed)
+    history = refit.simulate(days=365.0, n_points=4001)
+    assert float(np.min(history.inventory("storage"))) >= 0.5 * (1.0 - 1e-6) - 1e-9
+
+
+def test_required_startup_grows_with_horizon_for_deficit():
+    cycle = TritiumCycle(burn_rate=1e20, tbr=0.9, fractional_burnup=0.05, startup_inventory=0.0)
+    one_year = cycle.required_startup_inventory(days=365.0)
+    ten_years = cycle.required_startup_inventory(days=3650.0)
+    assert 0.0 < one_year < ten_years
+
+
+def test_required_startup_tiny_for_strong_breeder():
+    # even a strong breeder needs the pipeline-fill (in-transit) inventory,
+    # which shrinks with the residence times but is never exactly zero
+    cycle = TritiumCycle(
+        burn_rate=1e20,
+        tbr=2.0,
+        fractional_burnup=0.5,
+        startup_inventory=0.0,
+        blanket_residence_days=1e-3,
+        exhaust_residence_days=1e-3,
+        processing_residence_days=1e-3,
+    )
+    needed = cycle.required_startup_inventory(days=365.0)
+    assert 0.0 <= needed < 1e-3  # kg; ~1e-4 kg of in-transit fuel
+    slower = TritiumCycle(
+        burn_rate=1e20,
+        tbr=2.0,
+        fractional_burnup=0.5,
+        startup_inventory=0.0,
+        blanket_residence_days=1.0,
+        exhaust_residence_days=1.0,
+        processing_residence_days=1.0,
+    )
+    assert slower.required_startup_inventory(days=365.0) > needed
+
+
+@settings(max_examples=15, deadline=None)
+@given(
+    st.floats(min_value=0.85, max_value=1.4),
+    st.floats(min_value=0.005, max_value=0.5),
+    st.floats(min_value=0.8, max_value=1.0),
+    st.floats(min_value=0.0, max_value=0.1),
+)
+def test_inventories_nonnegative_from_required_start(tbr, f_b, eta, eps):
+    cycle = TritiumCycle(
+        burn_rate=1e20,
+        tbr=tbr,
+        fractional_burnup=f_b,
+        startup_inventory=0.0,
+        extraction_efficiency=eta,
+        processing_loss=eps,
+    )
+    needed = cycle.required_startup_inventory(days=365.0)
+    from dataclasses import replace
+
+    history = replace(cycle, startup_inventory=needed).simulate(days=365.0)
+    for name in ("blanket", "exhaust", "processing"):
+        assert float(np.min(history.inventory(name))) >= -1e-12
+    assert float(np.min(history.inventory("storage"))) >= -1e-9
+
+
+@settings(max_examples=10, deadline=None)
+@given(st.floats(min_value=0.9, max_value=1.3))
+def test_required_startup_monotone_in_tbr(tbr):
+    def needed(t):
+        return TritiumCycle(
+            burn_rate=1e20, tbr=t, fractional_burnup=0.02, startup_inventory=0.0
+        ).required_startup_inventory(days=730.0)
+
+    assert needed(tbr + 0.05) <= needed(tbr) * (1.0 + 1e-9) + 1e-12
 
 
 def test_provenance_and_to_dict(cycle):
