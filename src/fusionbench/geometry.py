@@ -97,7 +97,7 @@ class TokamakGeometry:
         )
         dz_dth = self.elongation * a * r * np.cos(th)
         dz_drho = self.elongation * a * np.sin(th)
-        return np.abs(dr_drho * dz_dth - dr_dth * dz_drho)
+        return as_float64(np.abs(dr_drho * dz_dth - dr_dth * dz_drho))
 
     def dvolume_drho(self, rho: ArrayLike, n_theta: int = 256) -> ArrayLike:
         """Differential volume dV/drho (m^3) of the surface at ``rho``.
@@ -110,7 +110,7 @@ class TokamakGeometry:
         theta = np.linspace(0.0, 2.0 * np.pi, n_theta + 1)
         big_r, _ = self.flux_surface(r[..., None], theta)
         jac = self.jacobian(r[..., None], theta)
-        integral = np.trapezoid(big_r * jac, theta, axis=-1)
+        integral = as_float64(np.trapezoid(big_r * jac, theta, axis=-1))
         return scalar_like(2.0 * np.pi * integral, rho)
 
     def volume(self, rho: float = 1.0, *, n_rho: int = 257, n_theta: int = 256) -> float:

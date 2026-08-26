@@ -148,9 +148,7 @@ def test_density_scaling_is_quadratic(scale):
     )
     scaled = PlasmaProfiles(
         ion_temperature=base.ion_temperature,
-        ion_density=RadialProfile(
-            rho=base.ion_density.rho, values=base.ion_density.values * scale
-        ),
+        ion_density=RadialProfile(rho=base.ion_density.rho, values=base.ion_density.values * scale),
     )
     rate_base = SpatialNeutronSource.from_profiles(base, geometry, n_rho=8, n_theta=8).total_rate
     rate_scaled = SpatialNeutronSource.from_profiles(

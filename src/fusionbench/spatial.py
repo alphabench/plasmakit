@@ -8,19 +8,21 @@ of one array-valued :class:`~fusionbench.plasma.PlasmaState`.
 
 from __future__ import annotations
 
+import os
 import warnings
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from types import MappingProxyType
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-from fusionbench import bosch_hale, spectra
+from fusionbench import bosch_hale, spectra, vtk_io
 from fusionbench.constants import as_float64
 from fusionbench.errors import FusionbenchError
-from fusionbench.geometry import TokamakGeometry
 from fusionbench.geometry import MODEL_ID as GEOMETRY_MODEL_ID
+from fusionbench.geometry import TokamakGeometry
 from fusionbench.plasma import PlasmaState
 from fusionbench.profiles import PlasmaProfiles
 from fusionbench.provenance import Provenance, build_provenance
@@ -30,9 +32,7 @@ from fusionbench.rates import applicable_reactions, power_partition, reaction_ra
 def _neutronic_reactions(fuel: Mapping[str, float]) -> tuple[str, ...]:
     ids = tuple(r.id for r in applicable_reactions(fuel) if r.neutronic)
     if not ids:
-        raise FusionbenchError(
-            f"fuel {dict(fuel)} produces no neutrons from registered reactions"
-        )
+        raise FusionbenchError(f"fuel {dict(fuel)} produces no neutrons from registered reactions")
     return ids
 
 
@@ -145,9 +145,7 @@ class SpatialNeutronSource:
         power = field(as_float64(power_partition(state).total))
 
         r_cells, z_cells = geometry.flux_surface(rho_c[:, None], theta_c[None, :])
-        r_corners, z_corners = geometry.flux_surface(
-            rho_edges[:, None], theta_edges[None, :]
-        )
+        r_corners, z_corners = geometry.flux_surface(rho_edges[:, None], theta_edges[None, :])
         jac = geometry.jacobian(rho_c[:, None], theta_c[None, :])
         volume = 2.0 * np.pi * r_cells * jac * d_rho * d_theta
 
@@ -215,8 +213,7 @@ class SpatialNeutronSource:
         density = as_float64(ion_density)
         if temperature.shape != shape or density.shape != shape:
             raise FusionbenchError(
-                f"fields must have cell shape {shape}, got {temperature.shape} "
-                f"and {density.shape}"
+                f"fields must have cell shape {shape}, got {temperature.shape} and {density.shape}"
             )
 
         state = PlasmaState(
@@ -315,3 +312,90 @@ class SpatialNeutronSource:
             reaction_id=tuple(reaction_id[keep]),
         )
 
+    def to_vtk(self, path: str | os.PathLike[str]) -> None:
+        """Write the source as a legacy ASCII VTK structured grid.
+
+        The poloidal (R, Z) mesh becomes the grid plane; emissivity, power
+        density, plasma fields, and cell volumes are written as cell data.
+        Readable directly by ParaView/VisIt; no VTK dependency required.
+        """
+        cell_data = {
+            "emissivity": self.emissivity,
+            "power_density": self.power_density,
+            "ion_temperature": self.ion_temperature,
+            "ion_density": self.ion_density,
+            "volume": self.volume,
+        }
+        vtk_io.write_structured_grid(path, self.r_corners, self.z_corners, cell_data)
+
+    def to_xarray(self) -> Any:
+        """Export the fields as an ``xarray.Dataset``.
+
+        Requires the optional ``xarray`` dependency
+        (``pip install fusionbench[xarray]``). Coordinates follow
+        ``self.dims`` with 2-D ``R``/``Z`` coordinates attached; dataset
+        attributes carry the integrated totals and the provenance record.
+        """
+        import xarray as xr
+
+        coords: dict[str, Any] = {name: (name, values) for name, values in self.coords.items()}
+        coords["R"] = (self.dims, self.r)
+        coords["Z"] = (self.dims, self.z)
+        data_vars = {
+            "emissivity": (self.dims, self.emissivity, {"units": "m^-3 s^-1"}),
+            "power_density": (self.dims, self.power_density, {"units": "W m^-3"}),
+            "ion_temperature": (self.dims, self.ion_temperature, {"units": "keV"}),
+            "ion_density": (self.dims, self.ion_density, {"units": "m^-3"}),
+            "volume": (self.dims, self.volume, {"units": "m^3"}),
+        }
+        for rid, rate in self.emissivity_by_reaction.items():
+            data_vars[f"emissivity_{rid}"] = (self.dims, rate, {"units": "m^-3 s^-1"})
+        return xr.Dataset(
+            data_vars=data_vars,
+            coords=coords,
+            attrs={
+                "total_rate": self.total_rate,
+                "total_fusion_power": self.total_fusion_power,
+                "provenance": self.provenance.to_json(indent=None),
+            },
+        )
+
+    def to_openmc(self, *, max_sources: int | None = 1000) -> list[Any]:
+        """Export as a list of weighted ``openmc.IndependentSource`` rings.
+
+        Requires the optional ``openmc`` dependency. One ring source is
+        created per (cell, reaction): axisymmetric in phi, discrete in
+        (r, z), isotropic, with a Gaussian energy spectrum at the local
+        ion temperature. OpenMC uses cm and eV; conversion is handled
+        here.
+
+        Source strengths are normalized weights summing to 1 — multiply
+        tallies by :attr:`total_rate` (neutrons/s) for absolute results.
+
+        Parameters
+        ----------
+        max_sources : int, optional
+            Cap on the number of rings (strongest kept); ``None`` exports
+            every cell.
+        """
+        import openmc
+
+        terms = self.source_terms(max_sources=max_sources)
+        total = float(np.sum(terms.strength))
+        sources = []
+        for i in range(terms.strength.size):
+            space = openmc.stats.CylindricalIndependent(
+                r=openmc.stats.Discrete([terms.r[i] * 100.0], [1.0]),
+                phi=openmc.stats.Uniform(0.0, 2.0 * np.pi),
+                z=openmc.stats.Discrete([terms.z[i] * 100.0], [1.0]),
+            )
+            energy = openmc.stats.Normal(terms.energy_mean[i] * 1e3, terms.energy_std[i] * 1e3)
+            sources.append(
+                openmc.IndependentSource(
+                    space=space,
+                    angle=openmc.stats.Isotropic(),
+                    energy=energy,
+                    strength=float(terms.strength[i]) / total,
+                )
+            )
+        return sources

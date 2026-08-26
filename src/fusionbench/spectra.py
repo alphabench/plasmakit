@@ -98,7 +98,7 @@ def neutron_mean_energy(fusion_reaction: str | Reaction, ion_temperature: ArrayL
 
 
 def neutron_std(fusion_reaction: str | Reaction, ion_temperature: ArrayLike) -> ArrayLike:
-    """Standard deviation (keV) of the Brysk neutron spectrum.
+    """Compute the standard deviation (keV) of the Brysk neutron spectrum.
 
     Parameters
     ----------

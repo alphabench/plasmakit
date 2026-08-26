@@ -25,6 +25,11 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+# openmc is intentionally not an extra: it is not distributed on PyPI.
+# Install it via conda-forge to use SpatialNeutronSource.to_openmc().
+[project.optional-dependencies]
+xarray = ["xarray>=2023.1"]
+
 [dependency-groups]
 dev = [
   "pytest>=8",
@@ -32,6 +37,7 @@ dev = [
   "hypothesis>=6",
   "ruff>=0.6",
   "mypy>=1.11",
+  "xarray>=2023.1",
 ]
 
 [tool.ruff]
@@ -50,6 +56,10 @@ convention = "numpy"
 [tool.mypy]
 strict = true
 files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["openmc.*", "xarray.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
