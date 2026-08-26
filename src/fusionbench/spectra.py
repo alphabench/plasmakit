@@ -97,6 +97,24 @@ def neutron_mean_energy(fusion_reaction: str | Reaction, ion_temperature: ArrayL
     return scalar_like(mean, ion_temperature)
 
 
+def neutron_std(fusion_reaction: str | Reaction, ion_temperature: ArrayLike) -> ArrayLike:
+    """Standard deviation (keV) of the Brysk neutron spectrum.
+
+    Parameters
+    ----------
+    fusion_reaction : str or Reaction
+        A neutron-producing reaction (``"DT"`` or ``"DDn"``).
+    ion_temperature : float or ndarray
+        Ion temperature in keV.
+    """
+    rxn = reaction(fusion_reaction)
+    _require_neutronic(rxn)
+    t = as_float64(ion_temperature)
+    assert rxn.neutron_energy is not None
+    std = np.sqrt(2.0 * _neutron_mass_fraction(rxn) * rxn.neutron_energy * t)
+    return scalar_like(std, ion_temperature)
+
+
 def neutron_spectrum(fusion_reaction: str | Reaction, ion_temperature: float) -> NeutronSpectrum:
     """Build the Brysk Gaussian spectrum for a reaction at one temperature.
 
@@ -113,10 +131,9 @@ def neutron_spectrum(fusion_reaction: str | Reaction, ion_temperature: float) ->
     if t <= 0.0:
         raise FusionbenchError("ion_temperature must be positive (keV)")
     assert rxn.neutron_energy is not None
-    fraction = _neutron_mass_fraction(rxn)
     return NeutronSpectrum(
         reaction=rxn,
         ion_temperature=t,
-        mean_energy=rxn.neutron_energy + 1.5 * t * fraction,
-        std=math.sqrt(2.0 * fraction * rxn.neutron_energy * t),
+        mean_energy=float(neutron_mean_energy(rxn, t)),
+        std=float(neutron_std(rxn, t)),
     )

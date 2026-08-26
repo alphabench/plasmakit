@@ -38,6 +38,17 @@ def test_sample_statistics():
     assert np.std(samples) == pytest.approx(spec.std, rel=1e-2)
 
 
+def test_neutron_std_matches_spectrum():
+    from fusionbench.spectra import neutron_std
+
+    for temperature in (1.0, 10.0, 25.0):
+        assert neutron_std("DT", temperature) == neutron_spectrum("DT", temperature).std
+    t = np.array([1.0, 10.0])
+    out = neutron_std("DDn", t)
+    assert out.shape == (2,)
+    assert isinstance(neutron_std("DDn", 10.0), float)
+
+
 def test_aneutronic_raises():
     with pytest.raises(FusionbenchError):
         neutron_spectrum("DDp", 10.0)
