@@ -36,6 +36,7 @@ from fusionbench.estimation import Posterior, fit
 from fusionbench.geometry import TokamakGeometry
 from fusionbench.materials import MATERIALS, Material
 from fusionbench.neutronics import BlanketResult, TallyValue
+from fusionbench.optimization import OptimizationResult, optimize, optimize_surrogate
 from fusionbench.plasma import PlasmaState
 from fusionbench.profiles import PlasmaProfiles, RadialProfile
 from fusionbench.provenance import Provenance
@@ -78,6 +79,7 @@ __all__ = [
     "Material",
     "NeutronSource",
     "NeutronSpectrum",
+    "OptimizationResult",
     "PlasmaProfiles",
     "PlasmaState",
     "Posterior",
@@ -100,6 +102,8 @@ __all__ = [
     "neutron_mean_energy",
     "neutron_spectrum",
     "neutron_std",
+    "optimize",
+    "optimize_surrogate",
     "power_partition",
     "propagate",
     "propagate_transport",

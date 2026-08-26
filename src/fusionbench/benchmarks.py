@@ -181,6 +181,17 @@ def _ishigami_indices() -> Any:
     )
 
 
+def _rosenbrock_minimizer() -> float:
+    from fusionbench.optimization import optimize
+
+    result = optimize(
+        lambda x, y: (1.0 - x) ** 2 + 100.0 * (y - x**2) ** 2,
+        {"x": (-2.0, 2.0), "y": (-1.0, 3.0)},
+        seed=0,
+    )
+    return float(result.best_parameters["x"])
+
+
 def _conjugate_posterior_mean() -> float:
     from fusionbench.estimation import fit
 
@@ -420,6 +431,17 @@ CASES: tuple[BenchmarkCase, ...] = (
         unit="",
         rtol=5e-2,
         compute=lambda: _ishigami_indices().first_order["x1"],
+    ),
+    BenchmarkCase(
+        name="Differential-evolution Rosenbrock minimizer",
+        reference=(
+            "Analytic: the Rosenbrock function has its global minimum at x = 1 "
+            "(R. Storn and K. Price, J. Global Optim. 11 (1997) 341)"
+        ),
+        reference_value=1.0,
+        unit="",
+        rtol=1e-3,
+        compute=_rosenbrock_minimizer,
     ),
     BenchmarkCase(
         name="MH posterior mean (conjugate normal-normal)",
