@@ -5,8 +5,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from fusionbench.distributions import Distribution
-from fusionbench.errors import FusionbenchError
+from plasmakit.distributions import Distribution
+from plasmakit.errors import PlasmakitError
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ from fusionbench.errors import FusionbenchError
     ],
 )
 def test_invalid_specs_rejected(factory):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         factory()
 
 

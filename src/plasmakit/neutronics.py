@@ -1,6 +1,6 @@
 """Blanket neutronics via OpenMC transport.
 
-Couples a :class:`~fusionbench.blanket.Blanket` and a neutron source into
+Couples a :class:`~plasmakit.blanket.Blanket` and a neutron source into
 an OpenMC fixed-source calculation and post-processes the tallies into a
 :class:`BlanketResult`: tritium breeding ratio, neutron wall load,
 per-layer energy deposition and tritium production, and NRT displacement
@@ -36,16 +36,16 @@ from typing import Any, Final
 import numpy as np
 import numpy.typing as npt
 
-from fusionbench import bosch_hale, spectra
-from fusionbench.blanket import Blanket
-from fusionbench.constants import as_float64
-from fusionbench.errors import FusionbenchError
-from fusionbench.materials import MODEL_ID as MATERIALS_MODEL_ID
-from fusionbench.plasma import PlasmaState
-from fusionbench.provenance import Provenance, build_provenance
-from fusionbench.rates import applicable_reactions, reaction_rate_density
-from fusionbench.sources import NeutronSource
-from fusionbench.spatial import SourceTerms, SpatialNeutronSource
+from plasmakit import bosch_hale, spectra
+from plasmakit.blanket import Blanket
+from plasmakit.constants import as_float64
+from plasmakit.errors import PlasmakitError
+from plasmakit.materials import MODEL_ID as MATERIALS_MODEL_ID
+from plasmakit.plasma import PlasmaState
+from plasmakit.provenance import Provenance, build_provenance
+from plasmakit.rates import applicable_reactions, reaction_rate_density
+from plasmakit.sources import NeutronSource
+from plasmakit.spatial import SourceTerms, SpatialNeutronSource
 
 MODEL_ID = "nrt-1975"
 
@@ -85,9 +85,9 @@ def nrt_dpa_rate(
         convention for iron (also standard for tungsten).
     """
     if n_atoms <= 0.0:
-        raise FusionbenchError("n_atoms must be positive")
+        raise PlasmakitError("n_atoms must be positive")
     if displacement_energy_ev <= 0.0:
-        raise FusionbenchError("displacement_energy_ev must be positive")
+        raise PlasmakitError("displacement_energy_ev must be positive")
     return 0.8 * damage_energy_ev_per_s / (2.0 * displacement_energy_ev) / n_atoms
 
 
@@ -112,7 +112,7 @@ def wall_load_mw_per_m2(
         Wall surface area, m^2.
     """
     if area_m2 <= 0.0:
-        raise FusionbenchError("area_m2 must be positive")
+        raise PlasmakitError("area_m2 must be positive")
     scale = total_rate * EV_TO_JOULE / area_m2 / 1.0e6
     value = float(np.sum(energy_ev * current_per_sp)) * scale
     std = float(np.sqrt(np.sum((energy_ev * current_std) ** 2))) * scale
@@ -186,7 +186,7 @@ class BlanketResult:
         """
         names = [layer.name for layer in blanket.layers]
         if len(h3_per_layer) != len(names) or len(heating_ev_per_layer) != len(names):
-            raise FusionbenchError("per-layer tallies must match the number of layers")
+            raise PlasmakitError("per-layer tallies must match the number of layers")
 
         tbr_value = sum(mean for mean, _ in h3_per_layer)
         tbr_std = math.sqrt(sum(std**2 for _, std in h3_per_layer))
@@ -289,16 +289,16 @@ def resolve_source_terms(
     else:
         state = source.plasma if isinstance(source, NeutronSource) else source
         if source_rate is None:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 "a 0-D plasma has only a neutron rate density; pass source_rate "
                 "(neutrons/s) or provide a SpatialNeutronSource"
             )
         if np.ndim(state.ion_temperature) != 0:
-            raise FusionbenchError("0-D source input requires a scalar ion_temperature")
+            raise PlasmakitError("0-D source input requires a scalar ion_temperature")
         temperature = float(state.ion_temperature)
         neutronic = [r for r in applicable_reactions(state.fuel) if r.neutronic]
         if not neutronic:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"fuel {dict(state.fuel)} produces no neutrons from registered reactions"
             )
         weights = np.asarray([float(reaction_rate_density(state, r)) for r in neutronic])
@@ -321,7 +321,7 @@ def resolve_source_terms(
 
     distance = np.hypot(terms.r - blanket.major_radius, terms.z)
     if np.any(distance >= blanket.first_wall_radius):
-        raise FusionbenchError(
+        raise PlasmakitError(
             "source rings must lie inside the first wall "
             f"(max distance {float(np.max(distance)):.3f} m >= "
             f"first_wall_radius {blanket.first_wall_radius} m)"

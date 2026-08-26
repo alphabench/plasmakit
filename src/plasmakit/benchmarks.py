@@ -14,20 +14,20 @@ from typing import Any
 
 import numpy as np
 
-from fusionbench import bosch_hale, geometry, materials, neutronics, spectra, tritium, uncertainty
-from fusionbench.blanket import Blanket, Layer
-from fusionbench.distributions import Distribution
-from fusionbench.geometry import TokamakGeometry
-from fusionbench.materials import eurofer97, li4sio4, pbli, tungsten
-from fusionbench.neutronics import nrt_dpa_rate
-from fusionbench.plasma import PlasmaState
-from fusionbench.profiles import PlasmaProfiles, RadialProfile
-from fusionbench.provenance import Provenance, build_provenance
-from fusionbench.rates import fusion_power_density
-from fusionbench.reactions import REACTIONS
-from fusionbench.reactivity import maxwellian_reactivity
-from fusionbench.spatial import SpatialNeutronSource
-from fusionbench.spectra import neutron_spectrum
+from plasmakit import bosch_hale, geometry, materials, neutronics, spectra, tritium, uncertainty
+from plasmakit.blanket import Blanket, Layer
+from plasmakit.distributions import Distribution
+from plasmakit.geometry import TokamakGeometry
+from plasmakit.materials import eurofer97, li4sio4, pbli, tungsten
+from plasmakit.neutronics import nrt_dpa_rate
+from plasmakit.plasma import PlasmaState
+from plasmakit.profiles import PlasmaProfiles, RadialProfile
+from plasmakit.provenance import Provenance, build_provenance
+from plasmakit.rates import fusion_power_density
+from plasmakit.reactions import REACTIONS
+from plasmakit.reactivity import maxwellian_reactivity
+from plasmakit.spatial import SpatialNeutronSource
+from plasmakit.spectra import neutron_spectrum
 
 _BOSCH_HALE = "H.-S. Bosch and G.M. Hale, Nucl. Fusion 32 (1992) 611"
 _BRYSK = "H. Brysk, Plasma Phys. 15 (1973) 611"
@@ -154,7 +154,7 @@ def _dt_power_density() -> float:
 
 
 def _identity_propagation() -> Any:
-    from fusionbench.uncertainty import propagate
+    from plasmakit.uncertainty import propagate
 
     return propagate(
         lambda x: x,
@@ -166,7 +166,7 @@ def _identity_propagation() -> Any:
 
 
 def _ishigami_indices() -> Any:
-    from fusionbench.uncertainty import sobol_indices
+    from plasmakit.uncertainty import sobol_indices
 
     def ishigami(x1: Any, x2: Any, x3: Any) -> Any:
         return np.sin(x1) + 7.0 * np.sin(x2) ** 2 + 0.1 * x3**4 * np.sin(x1)
@@ -182,7 +182,7 @@ def _ishigami_indices() -> Any:
 
 
 def _rosenbrock_minimizer() -> float:
-    from fusionbench.optimization import optimize
+    from plasmakit.optimization import optimize
 
     result = optimize(
         lambda x, y: (1.0 - x) ** 2 + 100.0 * (y - x**2) ** 2,
@@ -193,7 +193,7 @@ def _rosenbrock_minimizer() -> float:
 
 
 def _conjugate_posterior_mean() -> float:
-    from fusionbench.estimation import fit
+    from plasmakit.estimation import fit
 
     posterior = fit(
         lambda mu: mu,
@@ -208,7 +208,7 @@ def _conjugate_posterior_mean() -> float:
 
 
 def _gp_sin_recovery() -> float:
-    from fusionbench.surrogates import GaussianProcess
+    from plasmakit.surrogates import GaussianProcess
 
     x = np.linspace(0.0, 2.0 * np.pi, 12)
     gp = GaussianProcess.train(x, np.sin(x), seed=0)
@@ -216,7 +216,7 @@ def _gp_sin_recovery() -> float:
 
 
 def _decay_superposition() -> float:
-    from fusionbench.tritium import TRITIUM_HALF_LIFE_YEARS, TritiumCycle
+    from plasmakit.tritium import TRITIUM_HALF_LIFE_YEARS, TritiumCycle
 
     half_life_days = TRITIUM_HALF_LIFE_YEARS * 3.1536e7 / 86_400.0
     kwargs = dict(burn_rate=1.0e20, tbr=1.1, fractional_burnup=0.05)
@@ -230,7 +230,7 @@ def _decay_superposition() -> float:
 
 
 def _blanket_steady_state() -> float:
-    from fusionbench.tritium import TritiumCycle
+    from plasmakit.tritium import TritiumCycle
 
     cycle = TritiumCycle(
         burn_rate=1.0e20,
@@ -243,7 +243,7 @@ def _blanket_steady_state() -> float:
 
 
 def _mass_conservation_ratio() -> float:
-    from fusionbench.tritium import TritiumCycle
+    from plasmakit.tritium import TritiumCycle
 
     history = TritiumCycle(
         burn_rate=1.0e20,
@@ -256,7 +256,7 @@ def _mass_conservation_ratio() -> float:
 
 
 def _accumulation_slope() -> float:
-    from fusionbench.tritium import TritiumCycle
+    from plasmakit.tritium import TritiumCycle
 
     history = TritiumCycle(
         burn_rate=1.0e20,
@@ -272,7 +272,7 @@ def _accumulation_slope() -> float:
 
 
 def _linear_doubling_time() -> float:
-    from fusionbench.tritium import TritiumCycle
+    from plasmakit.tritium import TritiumCycle
 
     cycle = TritiumCycle(
         burn_rate=1.0e20,

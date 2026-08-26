@@ -3,7 +3,7 @@
 Turns plasma profiles on flux surfaces (or 2-D R-Z fields) into
 cell-resolved neutron emissivity, power density, and exportable source
 terms. All physics is delegated to the 0-D modules: each cell is an entry
-of one array-valued :class:`~fusionbench.plasma.PlasmaState`.
+of one array-valued :class:`~plasmakit.plasma.PlasmaState`.
 """
 
 from __future__ import annotations
@@ -18,21 +18,21 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from fusionbench import bosch_hale, spectra, vtk_io
-from fusionbench.constants import as_float64
-from fusionbench.errors import FusionbenchError
-from fusionbench.geometry import MODEL_ID as GEOMETRY_MODEL_ID
-from fusionbench.geometry import TokamakGeometry
-from fusionbench.plasma import PlasmaState
-from fusionbench.profiles import PlasmaProfiles
-from fusionbench.provenance import Provenance, build_provenance
-from fusionbench.rates import applicable_reactions, power_partition, reaction_rate_density
+from plasmakit import bosch_hale, spectra, vtk_io
+from plasmakit.constants import as_float64
+from plasmakit.errors import PlasmakitError
+from plasmakit.geometry import MODEL_ID as GEOMETRY_MODEL_ID
+from plasmakit.geometry import TokamakGeometry
+from plasmakit.plasma import PlasmaState
+from plasmakit.profiles import PlasmaProfiles
+from plasmakit.provenance import Provenance, build_provenance
+from plasmakit.rates import applicable_reactions, power_partition, reaction_rate_density
 
 
 def _neutronic_reactions(fuel: Mapping[str, float]) -> tuple[str, ...]:
     ids = tuple(r.id for r in applicable_reactions(fuel) if r.neutronic)
     if not ids:
-        raise FusionbenchError(f"fuel {dict(fuel)} produces no neutrons from registered reactions")
+        raise PlasmakitError(f"fuel {dict(fuel)} produces no neutrons from registered reactions")
     return ids
 
 
@@ -203,16 +203,16 @@ class SpatialNeutronSource:
         r_e = as_float64(r_edges)
         z_e = as_float64(z_edges)
         if r_e.ndim != 1 or z_e.ndim != 1 or r_e.size < 2 or z_e.size < 2:
-            raise FusionbenchError("r_edges and z_edges must be 1-D with at least 2 points")
+            raise PlasmakitError("r_edges and z_edges must be 1-D with at least 2 points")
         if np.any(np.diff(r_e) <= 0.0) or np.any(np.diff(z_e) <= 0.0):
-            raise FusionbenchError("r_edges and z_edges must be strictly increasing")
+            raise PlasmakitError("r_edges and z_edges must be strictly increasing")
         if r_e[0] < 0.0:
-            raise FusionbenchError("r_edges must be non-negative (m)")
+            raise PlasmakitError("r_edges must be non-negative (m)")
         shape = (r_e.size - 1, z_e.size - 1)
         temperature = as_float64(ion_temperature)
         density = as_float64(ion_density)
         if temperature.shape != shape or density.shape != shape:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"fields must have cell shape {shape}, got {temperature.shape} and {density.shape}"
             )
 
@@ -332,7 +332,7 @@ class SpatialNeutronSource:
         """Export the fields as an ``xarray.Dataset``.
 
         Requires the optional ``xarray`` dependency
-        (``pip install fusionbench[xarray]``). Coordinates follow
+        (``pip install plasmakit[xarray]``). Coordinates follow
         ``self.dims`` with 2-D ``R``/``Z`` coordinates attached; dataset
         attributes carry the integrated totals and the provenance record.
         """

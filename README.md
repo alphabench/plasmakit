@@ -1,11 +1,11 @@
-# fusionbench
+# plasmakit
 
 A fusion nuclear physics engine for Python: it connects plasma conditions to
 fusion reaction rates, neutron spectra, and power densities — and every
 calculation is validated against published references you can re-run yourself
-with `fusionbench.validate()`.
+with `plasmakit.validate()`.
 
-`fusionbench` is the plasma → neutron-source layer of fusion nuclear
+`plasmakit` is the plasma → neutron-source layer of fusion nuclear
 engineering. It is a library, not a workflow: small immutable objects, pure
 NumPy-vectorized functions, and first-class provenance so results are
 citable and reproducible.
@@ -13,9 +13,9 @@ citable and reproducible.
 ## Installation
 
 ```bash
-pip install fusionbench
+pip install plasmakit
 # or
-uv add fusionbench
+uv add plasmakit
 ```
 
 Requires Python ≥ 3.10. Runtime dependencies: NumPy and SciPy.
@@ -23,7 +23,7 @@ Requires Python ≥ 3.10. Runtime dependencies: NumPy and SciPy.
 ## Quickstart
 
 ```python
-import fusionbench as fb
+import plasmakit as fb
 
 plasma = fb.PlasmaState(
     ion_temperature=15.0,  # keV
@@ -46,7 +46,7 @@ Functional style works equally well, and everything is vectorized:
 
 ```python
 import numpy as np
-import fusionbench as fb
+import plasmakit as fb
 
 temperatures = np.linspace(1.0, 100.0, 500)  # keV
 sigma_v = fb.maxwellian_reactivity("DT", temperatures)  # m^3/s, shape (500,)
@@ -60,7 +60,7 @@ radial profiles on parameterized tokamak flux surfaces (Miller geometry with
 elongation, triangularity, and Shafranov shift), or from 2-D R-Z fields:
 
 ```python
-import fusionbench as fb
+import plasmakit as fb
 
 profiles = fb.PlasmaProfiles(
     ion_temperature=fb.RadialProfile.parabolic(20.0, 1.0),  # keV, core -> edge
@@ -81,7 +81,7 @@ Export it where you need it:
 
 ```python
 source.to_openmc()  # weighted openmc.IndependentSource rings (needs openmc)
-source.to_xarray()  # labeled xarray.Dataset  (pip install fusionbench[xarray])
+source.to_xarray()  # labeled xarray.Dataset  (pip install plasmakit[xarray])
 source.to_vtk("source.vtk")  # ParaView/VisIt, no VTK dependency needed
 ```
 
@@ -98,11 +98,11 @@ Users with equilibrium-code output can use
 
 Close the loop from plasma to tritium breeding. Describe a layered
 blanket with built-in, literature-cited materials and run an OpenMC
-transport calculation against any fusionbench source:
+transport calculation against any plasmakit source:
 
 ```python
-import fusionbench as fb
-from fusionbench.materials import beryllium, eurofer97, li4sio4, tungsten
+import plasmakit as fb
+from plasmakit.materials import beryllium, eurofer97, li4sio4, tungsten
 
 blanket = fb.Blanket(
     layers=(
@@ -144,7 +144,7 @@ huge unburned-fuel loop. `TritiumCycle` is a linear compartment model
 solved exactly by matrix exponential:
 
 ```python
-import fusionbench as fb
+import plasmakit as fb
 
 cycle = fb.TritiumCycle.from_blanket_result(  # chains from run_neutronics
     result,
@@ -183,7 +183,7 @@ distribution and propagate it through any model — from a fast
 reactivity chain to a full transport calculation:
 
 ```python
-import fusionbench as fb
+import plasmakit as fb
 
 
 def fusion_power(ion_temperature, ion_density):
@@ -227,7 +227,7 @@ computed values against published reference values — the same cases the test
 suite enforces in CI:
 
 ```python
-import fusionbench as fb
+import plasmakit as fb
 
 report = fb.validate()
 # case                          reference      computed   rel err  status

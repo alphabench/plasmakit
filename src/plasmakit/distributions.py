@@ -17,8 +17,8 @@ import numpy as np
 import numpy.typing as npt
 import scipy.stats
 
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
 
 _KINDS = ("normal", "lognormal", "uniform", "triangular")
 
@@ -38,25 +38,25 @@ class Distribution:
     def __post_init__(self) -> None:
         """Validate the spec and freeze the parameter mapping."""
         if self.kind not in _KINDS:
-            raise FusionbenchError(f"unknown distribution kind {self.kind!r}; known: {_KINDS}")
+            raise PlasmakitError(f"unknown distribution kind {self.kind!r}; known: {_KINDS}")
         p = dict(self.parameters)
         if self.kind in ("normal", "lognormal"):
             if set(p) != {"mean", "std"}:
-                raise FusionbenchError(f"{self.kind} needs parameters mean and std, got {set(p)}")
+                raise PlasmakitError(f"{self.kind} needs parameters mean and std, got {set(p)}")
             if p["std"] <= 0.0:
-                raise FusionbenchError("std must be positive")
+                raise PlasmakitError("std must be positive")
             if self.kind == "lognormal" and p["mean"] <= 0.0:
-                raise FusionbenchError("lognormal mean must be positive")
+                raise PlasmakitError("lognormal mean must be positive")
         elif self.kind == "uniform":
             if set(p) != {"low", "high"}:
-                raise FusionbenchError(f"uniform needs parameters low and high, got {set(p)}")
+                raise PlasmakitError(f"uniform needs parameters low and high, got {set(p)}")
             if p["low"] >= p["high"]:
-                raise FusionbenchError("uniform requires low < high")
+                raise PlasmakitError("uniform requires low < high")
         else:  # triangular
             if set(p) != {"low", "mode", "high"}:
-                raise FusionbenchError(f"triangular needs parameters low, mode, high, got {set(p)}")
+                raise PlasmakitError(f"triangular needs parameters low, mode, high, got {set(p)}")
             if not (p["low"] <= p["mode"] <= p["high"]) or p["low"] >= p["high"]:
-                raise FusionbenchError("triangular requires low <= mode <= high and low < high")
+                raise PlasmakitError("triangular requires low <= mode <= high and low < high")
         object.__setattr__(self, "parameters", MappingProxyType(p))
 
     @classmethod

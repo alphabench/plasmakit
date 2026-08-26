@@ -3,10 +3,10 @@ import json
 import numpy as np
 import pytest
 
-from fusionbench import NeutronSource, PlasmaState, maxwellian_reactivity
-from fusionbench.errors import FusionbenchError
-from fusionbench.rates import power_partition, reaction_rate_density
-from fusionbench.spectra import neutron_mean_energy
+from plasmakit import NeutronSource, PlasmaState, maxwellian_reactivity
+from plasmakit.errors import PlasmakitError
+from plasmakit.rates import power_partition, reaction_rate_density
+from plasmakit.spectra import neutron_mean_energy
 
 
 def test_facade_matches_functions(dt_plasma):
@@ -37,7 +37,7 @@ def test_rate_density_sums_neutronic(dt_plasma):
 
 def test_no_neutrons_raises():
     state = PlasmaState(ion_temperature=10.0, ion_density=1e20, fuel={"T": 1.0})
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         NeutronSource(state).rate_density()
 
 
@@ -45,7 +45,7 @@ def test_spectrum_rejects_array_temperature():
     state = PlasmaState(
         ion_temperature=np.array([5.0, 10.0]), ion_density=1e20, fuel={"D": 0.5, "T": 0.5}
     )
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         NeutronSource(state).spectrum()
 
 

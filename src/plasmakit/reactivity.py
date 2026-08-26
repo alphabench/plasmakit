@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from fusionbench import bosch_hale
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.errors import warn_outside_range
-from fusionbench.reactions import Reaction, reaction
+from plasmakit import bosch_hale
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.errors import warn_outside_range
+from plasmakit.reactions import Reaction, reaction
 
 _CM3_TO_M3 = 1.0e-6
 
@@ -24,7 +24,7 @@ def maxwellian_reactivity(fusion_reaction: str | Reaction, ion_temperature: Arra
     ----------
     fusion_reaction : str or Reaction
         Reaction identifier (``"DT"``, ``"DDn"``, ``"DDp"``, ``"DHe3"``)
-        or a :class:`~fusionbench.reactions.Reaction`.
+        or a :class:`~plasmakit.reactions.Reaction`.
     ion_temperature : float or ndarray
         Ion temperature in keV. Scalar or array (vectorized).
 

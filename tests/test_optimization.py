@@ -1,7 +1,7 @@
 import pytest
 
-from fusionbench.errors import FusionbenchError
-from fusionbench.optimization import optimize, optimize_surrogate
+from plasmakit.errors import PlasmakitError
+from plasmakit.optimization import optimize, optimize_surrogate
 
 
 def _rosenbrock(x, y):
@@ -44,7 +44,7 @@ def test_seed_determinism():
     ],
 )
 def test_invalid_inputs(bounds, kwargs):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         optimize(lambda x=0.0: x, bounds, **kwargs)
 
 

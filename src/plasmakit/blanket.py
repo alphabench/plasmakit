@@ -20,20 +20,20 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from fusionbench.errors import FusionbenchError
-from fusionbench.geometry import TokamakGeometry
-from fusionbench.materials import Material
+from plasmakit.errors import PlasmakitError
+from plasmakit.geometry import TokamakGeometry
+from plasmakit.materials import Material
 
 if TYPE_CHECKING:
-    from fusionbench.neutronics import BlanketResult, SourceInput
+    from plasmakit.neutronics import BlanketResult, SourceInput
 
 
 def torus_shell_volume(major_radius: float, r_inner: float, r_outer: float) -> float:
     """Volume (m^3) of a circular torus shell: ``2 pi^2 R0 (r_out^2 - r_in^2)``."""
     if not 0.0 <= r_inner < r_outer:
-        raise FusionbenchError("need 0 <= r_inner < r_outer")
+        raise PlasmakitError("need 0 <= r_inner < r_outer")
     if r_outer >= major_radius:
-        raise FusionbenchError("r_outer must be smaller than the major radius")
+        raise PlasmakitError("r_outer must be smaller than the major radius")
     return 2.0 * np.pi**2 * major_radius * (r_outer**2 - r_inner**2)
 
 
@@ -58,9 +58,9 @@ class Layer:
     def __post_init__(self) -> None:
         """Validate the layer."""
         if not self.name:
-            raise FusionbenchError("layer name must be non-empty")
+            raise PlasmakitError("layer name must be non-empty")
         if self.thickness <= 0.0:
-            raise FusionbenchError("layer thickness must be positive (m)")
+            raise PlasmakitError("layer thickness must be positive (m)")
 
 
 @dataclass(frozen=True)
@@ -84,18 +84,18 @@ class Blanket:
     def __post_init__(self) -> None:
         """Validate the radial build."""
         if not self.layers:
-            raise FusionbenchError("blanket needs at least one layer")
+            raise PlasmakitError("blanket needs at least one layer")
         object.__setattr__(self, "layers", tuple(self.layers))
         names = [layer.name for layer in self.layers]
         if len(set(names)) != len(names):
-            raise FusionbenchError(f"layer names must be unique, got {names}")
+            raise PlasmakitError(f"layer names must be unique, got {names}")
         if self.major_radius <= 0.0:
-            raise FusionbenchError("major_radius must be positive (m)")
+            raise PlasmakitError("major_radius must be positive (m)")
         if self.first_wall_radius <= 0.0:
-            raise FusionbenchError("first_wall_radius must be positive (m)")
+            raise PlasmakitError("first_wall_radius must be positive (m)")
         outer = self.first_wall_radius + sum(layer.thickness for layer in self.layers)
         if outer >= self.major_radius:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"radial build extends to {outer:.3f} m, which reaches the "
                 f"major radius {self.major_radius} m (torus would self-intersect)"
             )
@@ -173,9 +173,9 @@ class Blanket:
     ) -> BlanketResult:
         """Run an OpenMC transport calculation for this blanket (requires openmc).
 
-        See :func:`fusionbench.neutronics.run_neutronics` for parameters.
+        See :func:`plasmakit.neutronics.run_neutronics` for parameters.
         """
-        from fusionbench import neutronics
+        from plasmakit import neutronics
 
         return neutronics.run_neutronics(
             self,

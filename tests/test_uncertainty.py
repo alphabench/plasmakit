@@ -3,10 +3,10 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from fusionbench.distributions import Distribution
-from fusionbench.errors import FusionbenchError
-from fusionbench.neutronics import TallyValue
-from fusionbench.uncertainty import propagate, propagate_transport, sobol_indices
+from plasmakit.distributions import Distribution
+from plasmakit.errors import PlasmakitError
+from plasmakit.neutronics import TallyValue
+from plasmakit.uncertainty import propagate, propagate_transport, sobol_indices
 
 
 def _identity(x):
@@ -65,12 +65,12 @@ def test_sobol_rounds_to_power_of_two():
 
 
 def test_no_free_parameters_raises():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         propagate(_identity, {"x": 1.0})
 
 
 def test_bad_vectorized_shape_raises():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         propagate(
             lambda x: np.array([1.0]),
             {"x": Distribution.uniform(0.0, 1.0)},
@@ -165,7 +165,7 @@ def test_additive_model_first_equals_total():
 
 
 def test_constant_model_raises():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         sobol_indices(lambda x: 1.0, {"x": Distribution.uniform(0.0, 1.0)}, n_samples=64, seed=0)
 
 
@@ -194,5 +194,5 @@ def test_propagate_transport_zero_noise_matches_propagate():
 
 
 def test_propagate_transport_type_error():
-    with pytest.raises(FusionbenchError, match="TallyValue"):
+    with pytest.raises(PlasmakitError, match="TallyValue"):
         propagate_transport(lambda x: float(x), {"x": Distribution.uniform(0.0, 1.0)}, n_samples=4)

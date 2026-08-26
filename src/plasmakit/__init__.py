@@ -6,7 +6,7 @@ references (run :func:`validate`).
 
 Quickstart
 ----------
->>> import fusionbench as fb
+>>> import plasmakit as fb
 >>> plasma = fb.PlasmaState(ion_temperature=15.0, ion_density=1.0e20,
 ...                         fuel={"D": 0.5, "T": 0.5})
 >>> source = fb.NeutronSource(plasma)
@@ -28,37 +28,37 @@ Units: temperatures and energies in keV, densities in m^-3, cross sections
 in m^2, reactivities in m^3/s, power densities in W/m^3, lengths in m.
 """
 
-from fusionbench.benchmarks import BenchmarkReport, validate
-from fusionbench.blanket import Blanket, Layer
-from fusionbench.cross_sections import cross_section
-from fusionbench.distributions import Distribution
-from fusionbench.estimation import Posterior, fit
-from fusionbench.geometry import TokamakGeometry
-from fusionbench.materials import MATERIALS, Material
-from fusionbench.neutronics import BlanketResult, TallyValue
-from fusionbench.optimization import OptimizationResult, optimize, optimize_surrogate
-from fusionbench.plasma import PlasmaState
-from fusionbench.profiles import PlasmaProfiles, RadialProfile
-from fusionbench.provenance import Provenance
-from fusionbench.rates import (
+from plasmakit.benchmarks import BenchmarkReport, validate
+from plasmakit.blanket import Blanket, Layer
+from plasmakit.cross_sections import cross_section
+from plasmakit.distributions import Distribution
+from plasmakit.estimation import Posterior, fit
+from plasmakit.geometry import TokamakGeometry
+from plasmakit.materials import MATERIALS, Material
+from plasmakit.neutronics import BlanketResult, TallyValue
+from plasmakit.optimization import OptimizationResult, optimize, optimize_surrogate
+from plasmakit.plasma import PlasmaState
+from plasmakit.profiles import PlasmaProfiles, RadialProfile
+from plasmakit.provenance import Provenance
+from plasmakit.rates import (
     PowerPartition,
     fusion_power_density,
     power_partition,
     reaction_rate_density,
 )
-from fusionbench.reactions import REACTIONS, Reaction
-from fusionbench.reactivity import maxwellian_reactivity
-from fusionbench.sources import NeutronSource
-from fusionbench.spatial import SourceTerms, SpatialNeutronSource
-from fusionbench.spectra import (
+from plasmakit.reactions import REACTIONS, Reaction
+from plasmakit.reactivity import maxwellian_reactivity
+from plasmakit.sources import NeutronSource
+from plasmakit.spatial import SourceTerms, SpatialNeutronSource
+from plasmakit.spectra import (
     NeutronSpectrum,
     neutron_mean_energy,
     neutron_spectrum,
     neutron_std,
 )
-from fusionbench.surrogates import GaussianProcess, Surrogate
-from fusionbench.tritium import CycleHistory, TritiumCycle
-from fusionbench.uncertainty import (
+from plasmakit.surrogates import GaussianProcess, Surrogate
+from plasmakit.tritium import CycleHistory, TritiumCycle
+from plasmakit.uncertainty import (
     SobolIndices,
     UncertainResult,
     propagate,

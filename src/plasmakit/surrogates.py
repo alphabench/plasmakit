@@ -5,8 +5,8 @@ A small RBF-kernel Gaussian-process regressor (Rasmussen & Williams,
 2.1) with per-dimension (ARD) length scales, plus a :class:`Surrogate`
 convenience that emulates an expensive model function over named
 parameters and is a drop-in replacement for it in
-:func:`~fusionbench.uncertainty.propagate` and
-:func:`~fusionbench.optimization.optimize`.
+:func:`~plasmakit.uncertainty.propagate` and
+:func:`~plasmakit.optimization.optimize`.
 """
 
 from __future__ import annotations
@@ -20,11 +20,11 @@ import numpy.typing as npt
 import scipy.linalg
 import scipy.optimize
 
-from fusionbench import uncertainty
-from fusionbench.constants import as_float64
-from fusionbench.distributions import Distribution
-from fusionbench.errors import FusionbenchError
-from fusionbench.provenance import Provenance, build_provenance
+from plasmakit import uncertainty
+from plasmakit.constants import as_float64
+from plasmakit.distributions import Distribution
+from plasmakit.errors import PlasmakitError
+from plasmakit.provenance import Provenance, build_provenance
 
 MODEL_ID = "gp-rbf"
 
@@ -98,13 +98,13 @@ class GaussianProcess:
         y_arr = as_float64(y)
         n, d = x_arr.shape
         if y_arr.shape != (n,):
-            raise FusionbenchError(f"y must have shape ({n},), got {y_arr.shape}")
+            raise PlasmakitError(f"y must have shape ({n},), got {y_arr.shape}")
         if n < 2:
-            raise FusionbenchError("need at least 2 training points")
+            raise PlasmakitError("need at least 2 training points")
         if noise < 0.0:
-            raise FusionbenchError("noise must be non-negative")
+            raise PlasmakitError("noise must be non-negative")
         if not (np.all(np.isfinite(x_arr)) and np.all(np.isfinite(y_arr))):
-            raise FusionbenchError("training data must be finite")
+            raise PlasmakitError("training data must be finite")
 
         x_shift = np.mean(x_arr, axis=0)
         x_scale = np.std(x_arr, axis=0)
@@ -212,8 +212,8 @@ class Surrogate:
 
     ``surrogate(**params)`` returns the GP predictive mean, so a trained
     surrogate is a drop-in substitute for the emulated function in
-    :func:`~fusionbench.uncertainty.propagate` or
-    :func:`~fusionbench.optimization.optimize`.
+    :func:`~plasmakit.uncertainty.propagate` or
+    :func:`~plasmakit.optimization.optimize`.
     """
 
     parameters: tuple[str, ...]

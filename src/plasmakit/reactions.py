@@ -1,7 +1,7 @@
 """Fusion reaction metadata.
 
 Q values and two-body product energies are derived at import time from the
-nuclide rest-mass energies in :mod:`fusionbench.constants`, so no product
+nuclide rest-mass energies in :mod:`plasmakit.constants`, so no product
 energy is hand-copied. Product energies use non-relativistic two-body
 kinematics for reactants at rest:
 
@@ -14,8 +14,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-from fusionbench.constants import SPECIES_MASS_KEV
-from fusionbench.errors import UnknownReactionError
+from plasmakit.constants import SPECIES_MASS_KEV
+from plasmakit.errors import UnknownReactionError
 
 
 @dataclass(frozen=True, slots=True)

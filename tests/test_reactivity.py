@@ -3,8 +3,8 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from fusionbench.errors import ValidityRangeWarning
-from fusionbench.reactivity import maxwellian_reactivity
+from plasmakit.errors import ValidityRangeWarning
+from plasmakit.reactivity import maxwellian_reactivity
 
 # Bosch & Hale, Nucl. Fusion 32 (1992) 611, Table VIII (converted to m^3/s)
 TABLE_VIII = [

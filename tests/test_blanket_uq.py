@@ -4,13 +4,13 @@ import os
 
 import pytest
 
-from fusionbench.blanket import Blanket, Layer
-from fusionbench.distributions import Distribution
-from fusionbench.materials import eurofer97, li4sio4
-from fusionbench.neutronics import TallyValue
-from fusionbench.optimization import optimize_surrogate
-from fusionbench.plasma import PlasmaState
-from fusionbench.uncertainty import propagate_transport
+from plasmakit.blanket import Blanket, Layer
+from plasmakit.distributions import Distribution
+from plasmakit.materials import eurofer97, li4sio4
+from plasmakit.neutronics import TallyValue
+from plasmakit.optimization import optimize_surrogate
+from plasmakit.plasma import PlasmaState
+from plasmakit.uncertainty import propagate_transport
 
 needs_data = pytest.mark.skipif(
     not os.environ.get("OPENMC_CROSS_SECTIONS"), reason="OPENMC_CROSS_SECTIONS not set"

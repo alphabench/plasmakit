@@ -8,11 +8,11 @@ import numpy as np
 import numpy.typing as npt
 
 
-class FusionbenchError(Exception):
-    """Base class for all fusionbench errors."""
+class PlasmakitError(Exception):
+    """Base class for all plasmakit errors."""
 
 
-class UnknownReactionError(FusionbenchError, KeyError):
+class UnknownReactionError(PlasmakitError, KeyError):
     """Raised when a reaction identifier is not in the reaction registry."""
 
 

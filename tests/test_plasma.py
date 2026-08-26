@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from fusionbench import PlasmaState
-from fusionbench.errors import FusionbenchError
+from plasmakit import PlasmaState
+from plasmakit.errors import PlasmakitError
 
 
 def test_basic_construction(dt_plasma):
@@ -24,7 +24,7 @@ def test_basic_construction(dt_plasma):
     ],
 )
 def test_invalid_states_rejected(kwargs):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         PlasmaState(**kwargs)
 
 

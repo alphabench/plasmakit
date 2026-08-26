@@ -1,12 +1,12 @@
-# Contributing to fusionbench
+# Contributing to plasmakit
 
 Thank you for considering a contribution.
 
 ## Development setup
 
 ```bash
-git clone git@github.com:alphabench/fusionbench.git
-cd fusionbench
+git clone git@github.com:alphabench/plasmakit.git
+cd plasmakit
 uv sync           # installs runtime + dev dependencies into .venv
 ```
 
@@ -23,14 +23,14 @@ uv run pytest
 
 ## The benchmark convention
 
-Every physics model in fusionbench is validated against published
-reference values through the `fusionbench.benchmarks.CASES` registry,
-which drives both `fusionbench.validate()` and the test suite. Changes
+Every physics model in plasmakit is validated against published
+reference values through the `plasmakit.benchmarks.CASES` registry,
+which drives both `plasmakit.validate()` and the test suite. Changes
 to physics code must keep `validate()` fully passing, and a new physics
 model must arrive with:
 
 - a `MODEL_ID` string and a full citation in
-  `fusionbench.provenance.MODEL_REFERENCES`, and
+  `plasmakit.provenance.MODEL_REFERENCES`, and
 - at least one benchmark case with a citable analytic or published
   reference value.
 
@@ -42,19 +42,19 @@ nuclear-data library. OpenMC is not on PyPI — install it from
 conda-forge, and fetch a targeted data library, e.g.:
 
 ```bash
-micromamba create -n fusionbench-openmc -c conda-forge openmc pip
-micromamba run -n fusionbench-openmc pip install -e . openmc-data-downloader
-micromamba run -n fusionbench-openmc openmc_data_downloader \
+micromamba create -n plasmakit-openmc -c conda-forge openmc pip
+micromamba run -n plasmakit-openmc pip install -e . openmc-data-downloader
+micromamba run -n plasmakit-openmc openmc_data_downloader \
   -l ENDFB-7.1-NNDC -e H He Li Be C O Si V Cr Mn Fe Ta W Pb -d ~/nuclear_data
 export OPENMC_CROSS_SECTIONS=~/nuclear_data/cross_sections.xml
 ```
 
 ## Conventions
 
-- Frozen dataclasses, `FusionbenchError` for validation, NumPy-style
+- Frozen dataclasses, `PlasmakitError` for validation, NumPy-style
   docstrings on the public API, noun-named modules.
 - Units are documented per function: keV, m, m^-3, m^3/s, W/m^3 —
   except the tritium fuel cycle, where durations are days and
-  inventories kg (documented in `fusionbench.tritium`).
+  inventories kg (documented in `plasmakit.tritium`).
 - Every stochastic entry point takes a seed and must be deterministic
   for a fixed seed.

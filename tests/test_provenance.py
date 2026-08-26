@@ -2,13 +2,13 @@ from datetime import datetime
 
 import pytest
 
-from fusionbench import Provenance, __version__
-from fusionbench.provenance import MODEL_REFERENCES, build_provenance
+from plasmakit import Provenance, __version__
+from plasmakit.provenance import MODEL_REFERENCES, build_provenance
 
 
 def test_build_provenance_fields():
     record = build_provenance(["bosch-hale-1992"], {"T": 10.0})
-    assert record.package == "fusionbench"
+    assert record.package == "plasmakit"
     assert record.version == __version__
     assert record.models == ("bosch-hale-1992",)
     assert record.references == (MODEL_REFERENCES["bosch-hale-1992"],)

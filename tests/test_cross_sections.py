@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 
-from fusionbench.constants import KEV_TO_JOULE
-from fusionbench.cross_sections import cross_section
-from fusionbench.errors import ValidityRangeWarning
-from fusionbench.reactivity import maxwellian_reactivity
+from plasmakit.constants import KEV_TO_JOULE
+from plasmakit.cross_sections import cross_section
+from plasmakit.errors import ValidityRangeWarning
+from plasmakit.reactivity import maxwellian_reactivity
 
 BARN_TO_M2 = 1.0e-28
 
@@ -50,7 +50,7 @@ def test_reactivity_consistent_with_cross_section_integral():
     with E the center-of-mass energy. Cross-validates the two independent
     parameterizations (Table IV vs Table VII).
     """
-    from fusionbench.bosch_hale import REACTIVITY
+    from plasmakit.bosch_hale import REACTIVITY
 
     temperature = 10.0  # keV
     for rid in ("DT", "DDn", "DDp"):

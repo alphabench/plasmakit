@@ -40,10 +40,10 @@ import numpy.typing as npt
 import scipy.linalg
 import scipy.optimize
 
-from fusionbench.constants import AVOGADRO, ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
-from fusionbench.materials import ATOMIC_MASS_U
-from fusionbench.provenance import Provenance, build_provenance
+from plasmakit.constants import AVOGADRO, ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
+from plasmakit.materials import ATOMIC_MASS_U
+from plasmakit.provenance import Provenance, build_provenance
 
 MODEL_ID = "abdou-1986"
 MODERN_MODEL_ID = "abdou-2021"
@@ -96,7 +96,7 @@ class CycleHistory:
         """Validate shapes and freeze the mapping."""
         for name, values in self.inventories.items():
             if values.shape != self.times.shape:
-                raise FusionbenchError(
+                raise PlasmakitError(
                     f"inventory {name!r} shape {values.shape} does not match "
                     f"times shape {self.times.shape}"
                 )
@@ -107,7 +107,7 @@ class CycleHistory:
         try:
             return self.inventories[compartment]
         except KeyError:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"unknown compartment {compartment!r}; known: {COMPARTMENTS}"
             ) from None
 
@@ -167,28 +167,28 @@ class TritiumCycle:
     def __post_init__(self) -> None:
         """Validate all parameter bounds."""
         if self.burn_rate <= 0.0:
-            raise FusionbenchError("burn_rate must be positive (tritons/s)")
+            raise PlasmakitError("burn_rate must be positive (tritons/s)")
         if self.tbr < 0.0:
-            raise FusionbenchError("tbr must be non-negative")
+            raise PlasmakitError("tbr must be non-negative")
         if not 0.0 < self.fractional_burnup <= 1.0:
-            raise FusionbenchError("fractional_burnup must lie in (0, 1]")
+            raise PlasmakitError("fractional_burnup must lie in (0, 1]")
         if self.startup_inventory < 0.0:
-            raise FusionbenchError("startup_inventory must be non-negative (kg)")
+            raise PlasmakitError("startup_inventory must be non-negative (kg)")
         for name in (
             "blanket_residence_days",
             "exhaust_residence_days",
             "processing_residence_days",
         ):
             if getattr(self, name) <= 0.0:
-                raise FusionbenchError(f"{name} must be positive (days)")
+                raise PlasmakitError(f"{name} must be positive (days)")
         if not 0.0 < self.extraction_efficiency <= 1.0:
-            raise FusionbenchError("extraction_efficiency must lie in (0, 1]")
+            raise PlasmakitError("extraction_efficiency must lie in (0, 1]")
         if not 0.0 <= self.processing_loss < 1.0:
-            raise FusionbenchError("processing_loss must lie in [0, 1)")
+            raise PlasmakitError("processing_loss must lie in [0, 1)")
         if self.reserve_inventory < 0.0:
-            raise FusionbenchError("reserve_inventory must be non-negative (kg)")
+            raise PlasmakitError("reserve_inventory must be non-negative (kg)")
         if self.decay_constant < 0.0:
-            raise FusionbenchError("decay_constant must be non-negative (1/s)")
+            raise PlasmakitError("decay_constant must be non-negative (1/s)")
 
     @classmethod
     def from_fusion_power(cls, power_mw: float, **kwargs: float) -> TritiumCycle:
@@ -205,11 +205,11 @@ class TritiumCycle:
             Remaining :class:`TritiumCycle` parameters (tbr,
             fractional_burnup, startup_inventory, ...).
         """
-        from fusionbench.constants import KEV_TO_JOULE
-        from fusionbench.reactions import REACTIONS
+        from plasmakit.constants import KEV_TO_JOULE
+        from plasmakit.reactions import REACTIONS
 
         if power_mw <= 0.0:
-            raise FusionbenchError("power_mw must be positive")
+            raise PlasmakitError("power_mw must be positive")
         burn_rate = power_mw * 1.0e6 / (REACTIONS["DT"].q_value * KEV_TO_JOULE)
         return cls(burn_rate=burn_rate, **kwargs)
 
@@ -231,7 +231,7 @@ class TritiumCycle:
         Parameters
         ----------
         result : BlanketResult
-            Output of :meth:`fusionbench.blanket.Blanket.run_neutronics`.
+            Output of :meth:`plasmakit.blanket.Blanket.run_neutronics`.
         fractional_burnup, startup_inventory
             Required cycle parameters not derivable from neutronics.
         **kwargs
@@ -295,9 +295,9 @@ class TritiumCycle:
             Number of grid points (>= 2), including t = 0.
         """
         if days <= 0.0:
-            raise FusionbenchError("days must be positive")
+            raise PlasmakitError("days must be positive")
         if n_points < 2:
-            raise FusionbenchError("n_points must be at least 2")
+            raise PlasmakitError("n_points must be at least 2")
         matrix, source = self._system()
         dt = days * SECONDS_PER_DAY / (n_points - 1)
         augmented = np.zeros((5, 5))
@@ -330,9 +330,7 @@ class TritiumCycle:
             I_S* = ((1-eps) I_E*/tau_E - N_b/f_b) / lam
         """
         if self.decay_constant == 0.0:
-            raise FusionbenchError(
-                "no steady state without decay: the storage equation is singular"
-            )
+            raise PlasmakitError("no steady state without decay: the storage equation is singular")
         matrix, source = self._system()
         atoms = np.linalg.solve(matrix, -source)
         return MappingProxyType(
@@ -387,7 +385,7 @@ class TritiumCycle:
         doubles).
         """
         if self.startup_inventory <= 0.0:
-            raise FusionbenchError("doubling_time requires a positive startup_inventory")
+            raise PlasmakitError("doubling_time requires a positive startup_inventory")
         initial = self._initial_atoms()
         target = 2.0 * initial[3]
         history_atoms = np.array(
@@ -425,7 +423,7 @@ class TritiumCycle:
         tritium supply indefinitely.
         """
         if days <= 0.0:
-            raise FusionbenchError("days must be positive")
+            raise PlasmakitError("days must be positive")
         zero_start = np.zeros(4)
         reserve_atoms = float(kg_to_atoms(self.reserve_inventory))
         lam = self.decay_constant

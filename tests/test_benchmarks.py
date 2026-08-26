@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from fusionbench import validate
-from fusionbench.benchmarks import CASES, run_case
+from plasmakit import validate
+from plasmakit.benchmarks import CASES, run_case
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)

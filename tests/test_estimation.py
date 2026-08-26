@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from fusionbench.distributions import Distribution
-from fusionbench.errors import FusionbenchError
-from fusionbench.estimation import fit
+from plasmakit.distributions import Distribution
+from plasmakit.errors import PlasmakitError
+from plasmakit.estimation import fit
 
 
 @pytest.fixture(scope="module")
@@ -106,7 +106,7 @@ def test_seed_determinism():
     ],
 )
 def test_invalid_inputs(kwargs):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         fit(lambda x: x, **kwargs)
 
 

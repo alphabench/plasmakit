@@ -5,11 +5,11 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from fusionbench import NeutronSource, PlasmaState, fusion_power_density
-from fusionbench.errors import FusionbenchError
-from fusionbench.geometry import TokamakGeometry
-from fusionbench.profiles import PlasmaProfiles, RadialProfile
-from fusionbench.spatial import SpatialNeutronSource
+from plasmakit import NeutronSource, PlasmaState, fusion_power_density
+from plasmakit.errors import PlasmakitError
+from plasmakit.geometry import TokamakGeometry
+from plasmakit.profiles import PlasmaProfiles, RadialProfile
+from plasmakit.spatial import SpatialNeutronSource
 
 
 @pytest.fixture
@@ -102,14 +102,14 @@ def test_cross_pathway_consistency(circular_geometry, flat_profiles):
 )
 def test_from_rz_invalid_edges(r_edges, z_edges):
     n_r, n_z = max(r_edges.size - 1, 1), max(z_edges.size - 1, 1)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         SpatialNeutronSource.from_rz(
             r_edges, z_edges, np.full((n_r, n_z), 10.0), np.full((n_r, n_z), 1e20)
         )
 
 
 def test_from_rz_shape_mismatch():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         SpatialNeutronSource.from_rz(
             np.array([4.0, 5.0, 6.0]),
             np.array([0.0, 1.0]),
@@ -124,7 +124,7 @@ def test_no_neutronic_fuel_raises(circular_geometry):
         ion_density=RadialProfile.parabolic(1e20, 1e18),
         fuel={"T": 1.0},
     )
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         SpatialNeutronSource.from_profiles(profiles, circular_geometry)
 
 

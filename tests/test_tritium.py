@@ -6,8 +6,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from fusionbench.errors import FusionbenchError
-from fusionbench.tritium import (
+from plasmakit.errors import PlasmakitError
+from plasmakit.tritium import (
     SECONDS_PER_DAY,
     TRITIUM_DECAY_CONSTANT,
     CycleHistory,
@@ -57,7 +57,7 @@ def test_atom_kg_round_trip():
 def test_invalid_parameters(overrides):
     kwargs = dict(burn_rate=1e20, tbr=1.1, fractional_burnup=0.05, startup_inventory=5.0)
     kwargs.update(overrides)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         TritiumCycle(**kwargs)
 
 
@@ -104,14 +104,14 @@ def test_zero_decay_simulates_but_no_steady_state():
     history = cycle.simulate(days=1000.0)
     # TBR=1 lossless without decay conserves total inventory exactly
     assert history.total()[-1] == pytest.approx(history.total()[0], rel=1e-9)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         cycle.steady_state()
 
 
 def test_simulate_validation(cycle):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         cycle.simulate(days=0.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         cycle.simulate(days=10.0, n_points=1)
 
 
@@ -120,7 +120,7 @@ def test_history_interface(cycle):
     assert isinstance(history, CycleHistory)
     assert history.times.shape == (11,)
     assert history.inventory("storage")[0] == pytest.approx(5.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         history.inventory("divertor")
     json.dumps(history.to_dict())
 
@@ -178,7 +178,7 @@ def test_doubling_time_decreases_with_tbr():
 
 def test_doubling_time_requires_startup():
     cycle = TritiumCycle(burn_rate=1e20, tbr=1.2, fractional_burnup=0.05, startup_inventory=0.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         cycle.doubling_time()
 
 
@@ -269,22 +269,22 @@ def test_required_startup_monotone_in_tbr(tbr):
 
 
 def test_from_fusion_power():
-    from fusionbench.constants import KEV_TO_JOULE
-    from fusionbench.reactions import REACTIONS
+    from plasmakit.constants import KEV_TO_JOULE
+    from plasmakit.reactions import REACTIONS
 
     cycle = TritiumCycle.from_fusion_power(
         500.0, tbr=1.1, fractional_burnup=0.05, startup_inventory=5.0
     )
     expected = 500.0e6 / (REACTIONS["DT"].q_value * KEV_TO_JOULE)
     assert cycle.burn_rate == pytest.approx(expected, rel=1e-12)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         TritiumCycle.from_fusion_power(-1.0, tbr=1.1, fractional_burnup=0.05, startup_inventory=5.0)
 
 
 def test_from_blanket_result():
-    from fusionbench.blanket import Blanket, Layer
-    from fusionbench.materials import eurofer97, li4sio4
-    from fusionbench.neutronics import BlanketResult
+    from plasmakit.blanket import Blanket, Layer
+    from plasmakit.materials import eurofer97, li4sio4
+    from plasmakit.neutronics import BlanketResult
 
     blanket = Blanket(
         layers=(
@@ -312,8 +312,8 @@ def test_from_blanket_result():
 
 
 def test_uq_pattern_over_cycle_parameters():
-    from fusionbench.distributions import Distribution
-    from fusionbench.uncertainty import propagate
+    from plasmakit.distributions import Distribution
+    from plasmakit.uncertainty import propagate
 
     def required(tbr, fractional_burnup):
         return TritiumCycle(
@@ -366,9 +366,9 @@ needs_data = pytest.mark.skipif(
 @needs_data
 def test_fuel_cycle_from_transport():
     pytest.importorskip("openmc")
-    from fusionbench.blanket import Blanket, Layer
-    from fusionbench.materials import eurofer97, li4sio4
-    from fusionbench.plasma import PlasmaState
+    from plasmakit.blanket import Blanket, Layer
+    from plasmakit.materials import eurofer97, li4sio4
+    from plasmakit.plasma import PlasmaState
 
     blanket = Blanket(
         layers=(

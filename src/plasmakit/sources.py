@@ -8,16 +8,16 @@ from typing import Any
 
 import numpy as np
 
-from fusionbench import bosch_hale, spectra
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
-from fusionbench.plasma import PlasmaState
-from fusionbench.provenance import Provenance, build_provenance
-from fusionbench.rates import PowerPartition, applicable_reactions, power_partition
-from fusionbench.rates import reaction_rate_density as _rate
-from fusionbench.reactions import Reaction, reaction
-from fusionbench.reactivity import maxwellian_reactivity
-from fusionbench.spectra import NeutronSpectrum
+from plasmakit import bosch_hale, spectra
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
+from plasmakit.plasma import PlasmaState
+from plasmakit.provenance import Provenance, build_provenance
+from plasmakit.rates import PowerPartition, applicable_reactions, power_partition
+from plasmakit.rates import reaction_rate_density as _rate
+from plasmakit.reactions import Reaction, reaction
+from plasmakit.reactivity import maxwellian_reactivity
+from plasmakit.spectra import NeutronSpectrum
 
 
 @dataclass(frozen=True)
@@ -38,7 +38,7 @@ class NeutronSource:
     def _neutronic_reactions(self) -> tuple[Reaction, ...]:
         rxns = tuple(r for r in applicable_reactions(self.plasma.fuel) if r.neutronic)
         if not rxns:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"fuel {dict(self.plasma.fuel)} produces no neutrons from registered reactions"
             )
         return rxns
@@ -85,7 +85,7 @@ class NeutronSource:
         """Thermally broadened neutron spectrum (scalar-temperature plasmas)."""
         rxn = self._primary_reaction() if fusion_reaction is None else reaction(fusion_reaction)
         if np.ndim(self.plasma.ion_temperature) != 0:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 "spectrum() requires a scalar ion_temperature; build spectra per point"
             )
         return spectra.neutron_spectrum(rxn, float(self.plasma.ion_temperature))

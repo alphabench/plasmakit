@@ -3,15 +3,15 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from fusionbench import (
+from plasmakit import (
     PlasmaState,
     fusion_power_density,
     maxwellian_reactivity,
     power_partition,
     reaction_rate_density,
 )
-from fusionbench.errors import FusionbenchError
-from fusionbench.rates import applicable_reactions
+from plasmakit.errors import PlasmakitError
+from plasmakit.rates import applicable_reactions
 
 
 def test_dt_rate_is_quarter_n_squared(dt_plasma):
@@ -38,7 +38,7 @@ def test_applicable_reactions():
 
 def test_no_applicable_reactions_raises():
     state = PlasmaState(ion_temperature=10.0, ion_density=1e20, fuel={"T": 1.0})
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         power_partition(state)
 
 

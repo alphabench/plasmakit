@@ -3,10 +3,10 @@ import json
 import numpy as np
 import pytest
 
-from fusionbench.distributions import Distribution
-from fusionbench.errors import FusionbenchError
-from fusionbench.surrogates import GaussianProcess, Surrogate
-from fusionbench.uncertainty import propagate
+from plasmakit.distributions import Distribution
+from plasmakit.errors import PlasmakitError
+from plasmakit.surrogates import GaussianProcess, Surrogate
+from plasmakit.uncertainty import propagate
 
 
 @pytest.fixture(scope="module")
@@ -59,12 +59,12 @@ def test_gp_to_dict_json_safe(sin_gp):
     ],
 )
 def test_gp_invalid_inputs(x, y):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         GaussianProcess.train(x, y)
 
 
 def test_gp_negative_noise_rejected():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         GaussianProcess.train(np.zeros((3, 1)), np.zeros(3), noise=-1.0)
 
 

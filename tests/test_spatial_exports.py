@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 
-from fusionbench.geometry import TokamakGeometry
-from fusionbench.profiles import PlasmaProfiles, RadialProfile
-from fusionbench.spatial import SpatialNeutronSource
-from fusionbench.spectra import neutron_mean_energy, neutron_std
+from plasmakit.geometry import TokamakGeometry
+from plasmakit.profiles import PlasmaProfiles, RadialProfile
+from plasmakit.spatial import SpatialNeutronSource
+from plasmakit.spectra import neutron_mean_energy, neutron_std
 
 
 @pytest.fixture

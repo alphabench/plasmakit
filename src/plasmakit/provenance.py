@@ -131,10 +131,10 @@ def build_provenance(models: Sequence[str], inputs: dict[str, Any]) -> Provenanc
     inputs : dict
         JSON-safe description of the physical inputs.
     """
-    from fusionbench import __version__
+    from plasmakit import __version__
 
     return Provenance(
-        package="fusionbench",
+        package="plasmakit",
         version=__version__,
         models=tuple(models),
         references=tuple(MODEL_REFERENCES[m] for m in models),

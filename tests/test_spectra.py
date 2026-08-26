@@ -3,8 +3,8 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from fusionbench import neutron_mean_energy, neutron_spectrum
-from fusionbench.errors import FusionbenchError
+from plasmakit import neutron_mean_energy, neutron_spectrum
+from plasmakit.errors import PlasmakitError
 
 
 def test_dt_mean_energy_shifted_above_cold():
@@ -39,7 +39,7 @@ def test_sample_statistics():
 
 
 def test_neutron_std_matches_spectrum():
-    from fusionbench.spectra import neutron_std
+    from plasmakit.spectra import neutron_std
 
     for temperature in (1.0, 10.0, 25.0):
         assert neutron_std("DT", temperature) == neutron_spectrum("DT", temperature).std
@@ -50,14 +50,14 @@ def test_neutron_std_matches_spectrum():
 
 
 def test_aneutronic_raises():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         neutron_spectrum("DDp", 10.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         neutron_mean_energy("DHe3", 10.0)
 
 
 def test_nonpositive_temperature_raises():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         neutron_spectrum("DT", 0.0)
 
 

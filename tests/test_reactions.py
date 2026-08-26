@@ -1,7 +1,7 @@
 import pytest
 
-from fusionbench.errors import UnknownReactionError
-from fusionbench.reactions import REACTIONS, reaction
+from plasmakit.errors import UnknownReactionError
+from plasmakit.reactions import REACTIONS, reaction
 
 
 def test_registry_contents():

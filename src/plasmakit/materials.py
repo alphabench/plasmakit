@@ -18,8 +18,8 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Final, Literal
 
-from fusionbench.constants import AVOGADRO
-from fusionbench.errors import FusionbenchError
+from plasmakit.constants import AVOGADRO
+from plasmakit.errors import PlasmakitError
 
 MODEL_ID = "ciaaw-2021"
 
@@ -78,19 +78,19 @@ class Material:
     def __post_init__(self) -> None:
         """Validate and freeze the composition."""
         if not self.name:
-            raise FusionbenchError("material name must be non-empty")
+            raise PlasmakitError("material name must be non-empty")
         if self.density <= 0.0:
-            raise FusionbenchError("density must be positive (g/cm^3)")
+            raise PlasmakitError("density must be positive (g/cm^3)")
         if not self.composition:
-            raise FusionbenchError("composition must be non-empty")
+            raise PlasmakitError("composition must be non-empty")
         for species, fraction in self.composition.items():
             if species not in ATOMIC_MASS_U:
                 known = ", ".join(ATOMIC_MASS_U)
-                raise FusionbenchError(f"unknown species {species!r}; known: {known}")
+                raise PlasmakitError(f"unknown species {species!r}; known: {known}")
             if fraction <= 0.0:
-                raise FusionbenchError(f"fraction of {species!r} must be positive")
+                raise PlasmakitError(f"fraction of {species!r} must be positive")
         if self.percent_type not in ("ao", "wo"):
-            raise FusionbenchError("percent_type must be 'ao' or 'wo'")
+            raise PlasmakitError("percent_type must be 'ao' or 'wo'")
         object.__setattr__(self, "composition", MappingProxyType(dict(self.composition)))
 
     def atom_fractions(self) -> dict[str, float]:
@@ -147,7 +147,7 @@ def enriched_lithium(fraction: float, li6_enrichment: float) -> dict[str, float]
         Atom fraction of Li-6 in the lithium, in [0, 1].
     """
     if not 0.0 <= li6_enrichment <= 1.0:
-        raise FusionbenchError("li6_enrichment must lie in [0, 1]")
+        raise PlasmakitError("li6_enrichment must lie in [0, 1]")
     result = {}
     if li6_enrichment > 0.0:
         result["Li6"] = fraction * li6_enrichment

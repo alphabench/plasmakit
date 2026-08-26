@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fusionbench"
+name = "plasmakit"
 version = "0.1.0"
 description = "Fusion nuclear physics engine: plasma states, fusion reactivities, and neutron sources validated against published references."
 readme = "README.md"
@@ -26,9 +26,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/alphabench/fusionbench"
-Repository = "https://github.com/alphabench/fusionbench"
-Changelog = "https://github.com/alphabench/fusionbench/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/alphabench/plasmakit"
+Repository = "https://github.com/alphabench/plasmakit"
+Changelog = "https://github.com/alphabench/plasmakit/blob/main/CHANGELOG.md"
 
 # openmc is intentionally not an extra: it is not distributed on PyPI.
 # Install it via conda-forge to use SpatialNeutronSource.to_openmc().
@@ -56,7 +56,7 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D"]
-"src/fusionbench/bosch_hale.py" = ["E501"]
+"src/plasmakit/bosch_hale.py" = ["E501"]
 
 [tool.mypy]
 strict = true
@@ -70,4 +70,4 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
 markers = ["transport: requires openmc plus nuclear data (OPENMC_CROSS_SECTIONS)"]
-filterwarnings = ["error::fusionbench.errors.ValidityRangeWarning"]
+filterwarnings = ["error::plasmakit.errors.ValidityRangeWarning"]

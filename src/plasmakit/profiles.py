@@ -10,9 +10,9 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
-from fusionbench.plasma import PlasmaState
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
+from plasmakit.plasma import PlasmaState
 
 
 @dataclass(frozen=True)
@@ -41,17 +41,17 @@ class RadialProfile:
         rho = as_float64(self.rho)
         values = as_float64(self.values)
         if rho.ndim != 1 or rho.size < 2:
-            raise FusionbenchError("rho must be a 1-D grid with at least 2 points")
+            raise PlasmakitError("rho must be a 1-D grid with at least 2 points")
         if values.shape != rho.shape:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"values shape {values.shape} does not match rho shape {rho.shape}"
             )
         if np.any(np.diff(rho) <= 0.0):
-            raise FusionbenchError("rho must be strictly increasing")
+            raise PlasmakitError("rho must be strictly increasing")
         if rho[0] != 0.0 or rho[-1] != 1.0:
-            raise FusionbenchError("rho must span [0, 1] exactly")
+            raise PlasmakitError("rho must span [0, 1] exactly")
         if np.any(values <= 0.0):
-            raise FusionbenchError(
+            raise PlasmakitError(
                 "profile values must be strictly positive; use a small edge pedestal "
                 "instead of zero"
             )
@@ -62,7 +62,7 @@ class RadialProfile:
         """Evaluate the profile at ``rho`` in [0, 1] by linear interpolation."""
         r = as_float64(rho)
         if np.any((r < 0.0) | (r > 1.0)):
-            raise FusionbenchError("rho must lie in [0, 1]")
+            raise PlasmakitError("rho must lie in [0, 1]")
         return scalar_like(np.interp(r, self.rho, self.values), rho)
 
     @classmethod
@@ -107,7 +107,7 @@ class PlasmaProfiles:
     """Profile-resolved plasma description.
 
     Complements (does not replace) the 0-D
-    :class:`~fusionbench.plasma.PlasmaState`: evaluating the profiles at a
+    :class:`~plasmakit.plasma.PlasmaState`: evaluating the profiles at a
     set of radii yields an array-valued plasma state that all Phase-1
     physics functions accept unchanged.
 
@@ -118,7 +118,7 @@ class PlasmaProfiles:
     ion_density : RadialProfile
         Total fuel-ion density profile, m^-3.
     fuel : mapping of str to float
-        Fuel-ion fractions (as in :class:`~fusionbench.plasma.PlasmaState`).
+        Fuel-ion fractions (as in :class:`~plasmakit.plasma.PlasmaState`).
     """
 
     ion_temperature: RadialProfile

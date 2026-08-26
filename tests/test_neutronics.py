@@ -3,10 +3,10 @@ import os
 import numpy as np
 import pytest
 
-from fusionbench.blanket import Blanket, Layer
-from fusionbench.errors import FusionbenchError
-from fusionbench.materials import beryllium, eurofer97, li4sio4, tungsten
-from fusionbench.neutronics import (
+from plasmakit.blanket import Blanket, Layer
+from plasmakit.errors import PlasmakitError
+from plasmakit.materials import beryllium, eurofer97, li4sio4, tungsten
+from plasmakit.neutronics import (
     EV_TO_JOULE,
     SECONDS_PER_FULL_POWER_YEAR,
     WALL_LOAD_ENERGY_EDGES_EV,
@@ -16,9 +16,9 @@ from fusionbench.neutronics import (
     resolve_source_terms,
     wall_load_mw_per_m2,
 )
-from fusionbench.plasma import PlasmaState
-from fusionbench.spatial import SpatialNeutronSource
-from fusionbench.spectra import neutron_mean_energy, neutron_std
+from plasmakit.plasma import PlasmaState
+from plasmakit.spatial import SpatialNeutronSource
+from plasmakit.spectra import neutron_mean_energy, neutron_std
 
 
 @pytest.fixture
@@ -44,9 +44,9 @@ def test_nrt_dpa_rate():
     assert nrt_dpa_rate(1000.0, 1.0, displacement_energy_ev=90.0) == pytest.approx(
         0.8 * 1000.0 / 180.0
     )
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         nrt_dpa_rate(1.0, 0.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         nrt_dpa_rate(1.0, 1.0, displacement_energy_ev=0.0)
 
 
@@ -60,7 +60,7 @@ def test_wall_load_single_bin(blanket):
     expected = 14.07e6 * rate * EV_TO_JOULE / blanket.first_wall_area() / 1e6
     assert load.value == pytest.approx(expected)
     assert load.std_dev == pytest.approx(expected * 0.1)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         wall_load_mw_per_m2(energy, current, std, rate, 0.0)
 
 
@@ -98,7 +98,7 @@ def test_from_tallies_arithmetic(blanket):
 
 
 def test_from_tallies_layer_count_mismatch(blanket):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         _synthetic_result(blanket, h3_per_layer=[(1.0, 0.1)])
 
 
@@ -109,7 +109,7 @@ def test_from_tallies_chains_source_provenance(blanket, dt_state):
 
 
 def test_resolve_0d_requires_rate(blanket, dt_state):
-    with pytest.raises(FusionbenchError, match="source_rate"):
+    with pytest.raises(PlasmakitError, match="source_rate"):
         resolve_source_terms(dt_state, blanket)
 
 
@@ -127,8 +127,8 @@ def test_resolve_0d_builds_axis_rings(blanket, dt_state):
 
 
 def test_resolve_spatial_passthrough(blanket):
-    from fusionbench.geometry import TokamakGeometry
-    from fusionbench.profiles import PlasmaProfiles, RadialProfile
+    from plasmakit.geometry import TokamakGeometry
+    from plasmakit.profiles import PlasmaProfiles, RadialProfile
 
     spatial = SpatialNeutronSource.from_profiles(
         PlasmaProfiles(
@@ -146,7 +146,7 @@ def test_resolve_spatial_passthrough(blanket):
 
 
 def test_resolve_rejects_out_of_chamber_ring(blanket):
-    from fusionbench.spatial import SourceTerms
+    from plasmakit.spatial import SourceTerms
 
     terms = SourceTerms(
         r=np.array([6.0, 8.5]),
@@ -156,7 +156,7 @@ def test_resolve_rejects_out_of_chamber_ring(blanket):
         energy_std=np.array([100.0, 100.0]),
         reaction_id=("DT", "DT"),
     )
-    with pytest.raises(FusionbenchError, match="first wall"):
+    with pytest.raises(PlasmakitError, match="first wall"):
         resolve_source_terms(terms, blanket)
 
 
@@ -171,7 +171,7 @@ def test_tally_value_is_frozen():
 
 def test_build_model_structure(blanket, dt_state):
     openmc = pytest.importorskip("openmc")
-    from fusionbench.neutronics import build_model
+    from plasmakit.neutronics import build_model
 
     model = build_model(blanket, dt_state, particles=100, batches=2, source_rate=1e20)
     assert isinstance(model, openmc.Model)

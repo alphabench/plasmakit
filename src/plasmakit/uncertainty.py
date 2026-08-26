@@ -2,7 +2,7 @@
 
 Model functions are called as ``fn(**params)`` with keyword arguments
 named after the entries of the parameter mapping; entries may be
-:class:`~fusionbench.distributions.Distribution` objects (sampled) or
+:class:`~plasmakit.distributions.Distribution` objects (sampled) or
 plain floats (held fixed). Sampling uses scrambled Sobol quasi-Monte
 Carlo sequences by default, mapped through each distribution's inverse
 CDF; sample counts are rounded up to a power of two.
@@ -22,11 +22,11 @@ import numpy as np
 import numpy.typing as npt
 import scipy.stats.qmc
 
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.distributions import Distribution
-from fusionbench.errors import FusionbenchError
-from fusionbench.neutronics import TallyValue
-from fusionbench.provenance import Provenance, build_provenance
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.distributions import Distribution
+from plasmakit.errors import PlasmakitError
+from plasmakit.neutronics import TallyValue
+from plasmakit.provenance import Provenance, build_provenance
 
 MODEL_ID = "sobol-qmc"
 SALTELLI_MODEL_ID = "saltelli-2010"
@@ -48,7 +48,7 @@ def _split_parameters(
         else:
             fixed[name] = float(value)
     if not free_names:
-        raise FusionbenchError("at least one parameter must be a Distribution")
+        raise PlasmakitError("at least one parameter must be a Distribution")
     return free_names, free_dists, fixed
 
 
@@ -63,7 +63,7 @@ def _unit_samples(
     if method == "random":
         rng = np.random.default_rng(seed)
         return as_float64(rng.uniform(size=(n_samples, dimension)))
-    raise FusionbenchError(f"unknown sampling method {method!r}; use 'sobol' or 'random'")
+    raise PlasmakitError(f"unknown sampling method {method!r}; use 'sobol' or 'random'")
 
 
 def _map_quantiles(
@@ -87,7 +87,7 @@ def _evaluate(
         kwargs: dict[str, Any] = {name: values[:, j] for j, name in enumerate(free_names)} | fixed
         out = as_float64(fn(**kwargs))
         if out.shape != (n,):
-            raise FusionbenchError(f"vectorized fn must return shape ({n},), got {out.shape}")
+            raise PlasmakitError(f"vectorized fn must return shape ({n},), got {out.shape}")
         return out
     results = np.empty(n)
     for i in range(n):
@@ -264,7 +264,7 @@ def sobol_indices(
         fa, fb, fab = f_a[rows], f_b[rows], f_ab[:, rows]
         variance = float(np.var(np.concatenate([fa, fb]), ddof=1))
         if variance == 0.0:
-            raise FusionbenchError("model output has zero variance; indices undefined")
+            raise PlasmakitError("model output has zero variance; indices undefined")
         first = (variance - 0.5 * np.mean((fb[None, :] - fab) ** 2, axis=1)) / variance
         total = 0.5 * np.mean((fa[None, :] - fab) ** 2, axis=1) / variance
         return as_float64(first), as_float64(total)
@@ -313,7 +313,7 @@ def propagate_transport(
     """Propagate uncertainty through a Monte Carlo (tally-valued) model.
 
     Like :func:`propagate` but for functions returning a
-    :class:`~fusionbench.neutronics.TallyValue` (e.g. a blanket TBR from
+    :class:`~plasmakit.neutronics.TallyValue` (e.g. a blanket TBR from
     ``run_neutronics``). The per-run tally variance is folded into the
     result: ``std^2 = Var(sample values) + mean(tally std^2)``,
     separating parametric uncertainty from transport statistics.
@@ -330,7 +330,7 @@ def propagate_transport(
         kwargs = {name: float(values[i, j]) for j, name in enumerate(free_names)} | fixed
         result = fn(**kwargs)
         if not isinstance(result, TallyValue):
-            raise FusionbenchError(f"fn must return a TallyValue, got {type(result).__name__}")
+            raise PlasmakitError(f"fn must return a TallyValue, got {type(result).__name__}")
         outputs[i] = result.value
         tally_variances[i] = result.std_dev**2
     provenance = _sampling_provenance(

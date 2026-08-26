@@ -14,11 +14,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from fusionbench.constants import KEV_TO_JOULE, ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
-from fusionbench.plasma import PlasmaState
-from fusionbench.reactions import REACTIONS, Reaction, reaction
-from fusionbench.reactivity import maxwellian_reactivity
+from plasmakit.constants import KEV_TO_JOULE, ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
+from plasmakit.plasma import PlasmaState
+from plasmakit.reactions import REACTIONS, Reaction, reaction
+from plasmakit.reactivity import maxwellian_reactivity
 
 
 def applicable_reactions(fuel: Mapping[str, float]) -> tuple[Reaction, ...]:
@@ -35,7 +35,7 @@ def reaction_rate_density(state: PlasmaState, fusion_reaction: str | Reaction) -
     state : PlasmaState
         Plasma state supplying temperature, density, and fuel composition.
     fusion_reaction : str or Reaction
-        Reaction identifier or :class:`~fusionbench.reactions.Reaction`.
+        Reaction identifier or :class:`~plasmakit.reactions.Reaction`.
     """
     rxn = reaction(fusion_reaction)
     n1 = as_float64(state.density(rxn.reactants[0]))
@@ -84,7 +84,7 @@ def power_partition(
         else tuple(reaction(r) for r in reactions)
     )
     if not selected:
-        raise FusionbenchError(f"no applicable reactions for fuel {dict(state.fuel)}")
+        raise PlasmakitError(f"no applicable reactions for fuel {dict(state.fuel)}")
     neutron = np.zeros(())
     charged = np.zeros(())
     for rxn in selected:

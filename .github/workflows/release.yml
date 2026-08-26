@@ -35,8 +35,8 @@ jobs:
 
       - name: Smoke-test the built wheel
         run: >
-          uv run --no-project --isolated --with ./dist/fusionbench-*.whl
-          python -c "import fusionbench as fb; assert fb.validate(verbose=False).passed"
+          uv run --no-project --isolated --with ./dist/plasmakit-*.whl
+          python -c "import plasmakit as fb; assert fb.validate(verbose=False).passed"
 
       - name: Upload distribution
         uses: actions/upload-artifact@v4
@@ -52,7 +52,7 @@ jobs:
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
     environment:
       name: pypi
-      url: https://pypi.org/p/fusionbench
+      url: https://pypi.org/p/plasmakit
     permissions:
       id-token: write  # Required for trusted publishing
     steps:

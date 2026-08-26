@@ -19,9 +19,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from fusionbench.constants import SPECIES_MASS_KEV, ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
-from fusionbench.reactions import Reaction, reaction
+from plasmakit.constants import SPECIES_MASS_KEV, ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
+from plasmakit.reactions import Reaction, reaction
 
 MODEL_ID = "brysk-1973"
 
@@ -37,7 +37,7 @@ def _neutron_mass_fraction(rxn: Reaction) -> float:
 
 def _require_neutronic(rxn: Reaction) -> None:
     if not rxn.neutronic:
-        raise FusionbenchError(f"{rxn.label} is aneutronic; no neutron spectrum exists")
+        raise PlasmakitError(f"{rxn.label} is aneutronic; no neutron spectrum exists")
 
 
 @dataclass(frozen=True)
@@ -129,7 +129,7 @@ def neutron_spectrum(fusion_reaction: str | Reaction, ion_temperature: float) ->
     _require_neutronic(rxn)
     t = float(ion_temperature)
     if t <= 0.0:
-        raise FusionbenchError("ion_temperature must be positive (keV)")
+        raise PlasmakitError("ion_temperature must be positive (keV)")
     assert rxn.neutron_energy is not None
     return NeutronSpectrum(
         reaction=rxn,

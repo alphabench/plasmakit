@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from fusionbench.errors import FusionbenchError
-from fusionbench.materials import (
+from plasmakit.errors import PlasmakitError
+from plasmakit.materials import (
     LI6_NATURAL_ABUNDANCE,
     MATERIALS,
     Material,
@@ -45,9 +45,9 @@ def test_enriched_lithium():
     assert natural["Li7"] == pytest.approx(0.9241)
     assert enriched_lithium(1.0, 1.0) == {"Li6": 1.0}
     assert enriched_lithium(1.0, 0.0) == {"Li7": 1.0}
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         enriched_lithium(1.0, 1.5)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         enriched_lithium(1.0, -0.1)
 
 
@@ -85,7 +85,7 @@ def test_tungsten_atom_density():
     ],
 )
 def test_invalid_materials_rejected(kwargs):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         Material(**kwargs)
 
 

@@ -9,8 +9,8 @@ from typing import Any
 
 import numpy as np
 
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
 
 _FUEL_SPECIES = ("D", "T", "3He")
 
@@ -44,27 +44,27 @@ class PlasmaState:
         t = as_float64(self.ion_temperature)
         n = as_float64(self.ion_density)
         if np.any(t <= 0.0):
-            raise FusionbenchError("ion_temperature must be positive (keV)")
+            raise PlasmakitError("ion_temperature must be positive (keV)")
         if np.any(n <= 0.0):
-            raise FusionbenchError("ion_density must be positive (m^-3)")
+            raise PlasmakitError("ion_density must be positive (m^-3)")
         try:
             np.broadcast_shapes(t.shape, n.shape)
         except ValueError:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"ion_temperature shape {t.shape} and ion_density shape {n.shape} "
                 "are not broadcast-compatible"
             ) from None
         unknown = set(self.fuel) - set(_FUEL_SPECIES)
         if unknown:
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"unknown fuel species {sorted(unknown)}; supported: {list(_FUEL_SPECIES)}"
             )
         fractions = list(self.fuel.values())
         if any(f < 0.0 or f > 1.0 for f in fractions):
-            raise FusionbenchError("fuel fractions must be in [0, 1]")
+            raise PlasmakitError("fuel fractions must be in [0, 1]")
         total = sum(fractions)
         if abs(total - 1.0) > 1e-8:
-            raise FusionbenchError(f"fuel fractions must sum to 1, got {total}")
+            raise PlasmakitError(f"fuel fractions must sum to 1, got {total}")
         object.__setattr__(self, "fuel", MappingProxyType(dict(self.fuel)))
 
     def density(self, species: str) -> ArrayLike:

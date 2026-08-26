@@ -3,8 +3,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from fusionbench.errors import FusionbenchError
-from fusionbench.geometry import TokamakGeometry
+from plasmakit.errors import PlasmakitError
+from plasmakit.geometry import TokamakGeometry
 
 
 def test_circular_volume_analytic():
@@ -88,5 +88,5 @@ def test_jacobian_positive_off_axis():
     ],
 )
 def test_invalid_geometry_rejected(kwargs):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         TokamakGeometry(**kwargs)

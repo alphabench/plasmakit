@@ -19,9 +19,9 @@ import numpy as np
 import numpy.typing as npt
 import scipy.optimize
 
-from fusionbench import surrogates, uncertainty
-from fusionbench.errors import FusionbenchError
-from fusionbench.provenance import Provenance, build_provenance
+from plasmakit import surrogates, uncertainty
+from plasmakit.errors import PlasmakitError
+from plasmakit.provenance import Provenance, build_provenance
 
 MODEL_ID = "storn-price-1997"
 
@@ -60,10 +60,10 @@ class OptimizationResult:
 
 def _validate_bounds(bounds: Mapping[str, tuple[float, float]]) -> list[str]:
     if not bounds:
-        raise FusionbenchError("bounds must be non-empty")
+        raise PlasmakitError("bounds must be non-empty")
     for name, (low, high) in bounds.items():
         if low >= high:
-            raise FusionbenchError(f"bounds for {name!r} require low < high, got ({low}, {high})")
+            raise PlasmakitError(f"bounds for {name!r} require low < high, got ({low}, {high})")
     return list(bounds)
 
 
@@ -95,7 +95,7 @@ def optimize(
         Passed to :func:`scipy.optimize.differential_evolution`.
     """
     if method != "differential-evolution":
-        raise FusionbenchError(f"unknown method {method!r}; use 'differential-evolution'")
+        raise PlasmakitError(f"unknown method {method!r}; use 'differential-evolution'")
     names = _validate_bounds(bounds)
 
     def wrapped(x: npt.NDArray[np.float64]) -> float:

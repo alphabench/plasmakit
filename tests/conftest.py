@@ -1,6 +1,6 @@
 import pytest
 
-from fusionbench import PlasmaState
+from plasmakit import PlasmaState
 
 
 @pytest.fixture

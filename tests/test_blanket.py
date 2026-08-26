@@ -3,10 +3,10 @@ import json
 import numpy as np
 import pytest
 
-from fusionbench.blanket import Blanket, Layer, torus_shell_volume
-from fusionbench.errors import FusionbenchError
-from fusionbench.geometry import TokamakGeometry
-from fusionbench.materials import eurofer97, li4sio4
+from plasmakit.blanket import Blanket, Layer, torus_shell_volume
+from plasmakit.errors import PlasmakitError
+from plasmakit.geometry import TokamakGeometry
+from plasmakit.materials import eurofer97, li4sio4
 
 
 @pytest.fixture
@@ -23,9 +23,9 @@ def blanket() -> Blanket:
 
 def test_torus_shell_volume():
     assert torus_shell_volume(6.0, 2.0, 3.0) == pytest.approx(2.0 * np.pi**2 * 6.0 * 5.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         torus_shell_volume(6.0, 3.0, 2.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         torus_shell_volume(6.0, 2.0, 6.0)
 
 
@@ -51,14 +51,14 @@ def test_first_wall_area(blanket):
     ],
 )
 def test_invalid_blankets_rejected(layers, major_radius, first_wall_radius):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         Blanket(layers=layers, major_radius=major_radius, first_wall_radius=first_wall_radius)
 
 
 def test_invalid_layers_rejected():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         Layer("", eurofer97(), 0.5)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         Layer("x", eurofer97(), 0.0)
 
 

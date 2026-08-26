@@ -12,7 +12,7 @@ from collections.abc import Mapping
 import numpy as np
 import numpy.typing as npt
 
-from fusionbench.errors import FusionbenchError
+from plasmakit.errors import PlasmakitError
 
 
 def write_structured_grid(
@@ -34,11 +34,11 @@ def write_structured_grid(
         Scalar fields on cells, each with shape ``(n1, n2)``.
     """
     if x.ndim != 2 or x.shape != y.shape:
-        raise FusionbenchError("x and y must be 2-D arrays of identical shape")
+        raise PlasmakitError("x and y must be 2-D arrays of identical shape")
     n1, n2 = x.shape[0] - 1, x.shape[1] - 1
     for name, values in cell_data.items():
         if values.shape != (n1, n2):
-            raise FusionbenchError(
+            raise PlasmakitError(
                 f"cell field {name!r} has shape {values.shape}, expected {(n1, n2)}"
             )
 
@@ -49,7 +49,7 @@ def write_structured_grid(
 
     lines = [
         "# vtk DataFile Version 3.0",
-        "fusionbench structured grid",
+        "plasmakit structured grid",
         "ASCII",
         "DATASET STRUCTURED_GRID",
         f"DIMENSIONS {n1 + 1} {n2 + 1} 1",

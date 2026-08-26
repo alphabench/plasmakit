@@ -16,11 +16,11 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from fusionbench import bosch_hale
-from fusionbench.bosch_hale import CrossSectionCoefficients
-from fusionbench.constants import MILLIBARN_TO_M2, ArrayLike, as_float64, scalar_like
-from fusionbench.errors import warn_outside_range
-from fusionbench.reactions import Reaction, reaction
+from plasmakit import bosch_hale
+from plasmakit.bosch_hale import CrossSectionCoefficients
+from plasmakit.constants import MILLIBARN_TO_M2, ArrayLike, as_float64, scalar_like
+from plasmakit.errors import warn_outside_range
+from plasmakit.reactions import Reaction, reaction
 
 
 def _sigma_millibarn(
@@ -40,7 +40,7 @@ def cross_section(fusion_reaction: str | Reaction, energy: ArrayLike) -> ArrayLi
     Parameters
     ----------
     fusion_reaction : str or Reaction
-        Reaction identifier or :class:`~fusionbench.reactions.Reaction`.
+        Reaction identifier or :class:`~plasmakit.reactions.Reaction`.
     energy : float or ndarray
         Center-of-mass energy in keV. Scalar or array (vectorized).
 

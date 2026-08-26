@@ -3,9 +3,9 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from fusionbench.errors import FusionbenchError
-from fusionbench.plasma import PlasmaState
-from fusionbench.profiles import PlasmaProfiles, RadialProfile
+from plasmakit.errors import PlasmakitError
+from plasmakit.plasma import PlasmaState
+from plasmakit.profiles import PlasmaProfiles, RadialProfile
 
 
 def test_parabolic_endpoints():
@@ -42,15 +42,15 @@ def test_from_callable_exact_at_nodes():
     ],
 )
 def test_invalid_profiles_rejected(rho, values):
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         RadialProfile(rho=rho, values=values)
 
 
 def test_call_outside_unit_interval_raises():
     profile = RadialProfile.parabolic(10.0, 1.0)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         profile(1.5)
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         profile(np.array([0.5, -0.1]))
 
 
@@ -78,7 +78,7 @@ def test_state_at_matches_profiles():
 
 
 def test_bad_fuel_rejected_eagerly():
-    with pytest.raises(FusionbenchError):
+    with pytest.raises(PlasmakitError):
         PlasmaProfiles(
             ion_temperature=RadialProfile.parabolic(20.0, 1.0),
             ion_density=RadialProfile.parabolic(1e20, 1e18),

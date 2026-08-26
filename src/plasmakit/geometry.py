@@ -20,8 +20,8 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.errors import FusionbenchError
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.errors import PlasmakitError
 
 MODEL_ID = "miller-1998"
 
@@ -53,15 +53,15 @@ class TokamakGeometry:
     def __post_init__(self) -> None:
         """Validate the shape parameters."""
         if self.major_radius <= 0.0:
-            raise FusionbenchError("major_radius must be positive (m)")
+            raise PlasmakitError("major_radius must be positive (m)")
         if self.minor_radius <= 0.0:
-            raise FusionbenchError("minor_radius must be positive (m)")
+            raise PlasmakitError("minor_radius must be positive (m)")
         if self.elongation <= 0.0:
-            raise FusionbenchError("elongation must be positive")
+            raise PlasmakitError("elongation must be positive")
         if abs(self.triangularity) >= 1.0:
-            raise FusionbenchError("triangularity must satisfy |delta| < 1")
+            raise PlasmakitError("triangularity must satisfy |delta| < 1")
         if self.major_radius + self.shafranov_shift - self.minor_radius <= 0.0:
-            raise FusionbenchError("innermost surfaces must stay at R > 0")
+            raise PlasmakitError("innermost surfaces must stay at R > 0")
 
     def flux_surface(
         self, rho: ArrayLike, theta: ArrayLike
@@ -116,7 +116,7 @@ class TokamakGeometry:
     def volume(self, rho: float = 1.0, *, n_rho: int = 257, n_theta: int = 256) -> float:
         """Plasma volume (m^3) enclosed by the surface ``rho``."""
         if not 0.0 <= rho <= 1.0:
-            raise FusionbenchError("rho must lie in [0, 1]")
+            raise PlasmakitError("rho must lie in [0, 1]")
         grid = np.linspace(0.0, rho, n_rho)
         dv = as_float64(self.dvolume_drho(grid, n_theta=n_theta))
         return float(np.trapezoid(dv, grid))

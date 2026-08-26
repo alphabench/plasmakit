@@ -1,6 +1,6 @@
 import numpy as np
 
-from fusionbench.constants import (
+from plasmakit.constants import (
     ALPHA_MASS_KEV,
     DEUTERON_MASS_KEV,
     KEV_TO_JOULE,

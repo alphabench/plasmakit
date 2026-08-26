@@ -24,10 +24,10 @@ import numpy as np
 import numpy.typing as npt
 import scipy.optimize
 
-from fusionbench.constants import ArrayLike, as_float64, scalar_like
-from fusionbench.distributions import Distribution
-from fusionbench.errors import FusionbenchError
-from fusionbench.provenance import Provenance, build_provenance
+from plasmakit.constants import ArrayLike, as_float64, scalar_like
+from plasmakit.distributions import Distribution
+from plasmakit.errors import PlasmakitError
+from plasmakit.provenance import Provenance, build_provenance
 
 MODEL_ID = "metropolis-hastings"
 
@@ -133,11 +133,11 @@ def fit(
         Chain seed (deterministic for a given seed).
     """
     if not priors:
-        raise FusionbenchError("priors must be non-empty")
+        raise PlasmakitError("priors must be non-empty")
     if noise_std <= 0.0:
-        raise FusionbenchError("noise_std must be positive")
+        raise PlasmakitError("noise_std must be positive")
     if n_samples <= 0 or burn_in < 0 or thin <= 0:
-        raise FusionbenchError("n_samples and thin must be positive; burn_in non-negative")
+        raise PlasmakitError("n_samples and thin must be positive; burn_in non-negative")
 
     names = list(priors)
     dists = [priors[name] for name in names]

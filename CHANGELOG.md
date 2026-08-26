@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `NeutronSource` facade tying plasma state to reactivities, spectra, and power.
 - First-class provenance records (`Provenance`) with model identifiers and
   citations, JSON round-trip.
-- `fusionbench.validate()`: benchmark suite comparing computed values against
+- `plasmakit.validate()`: benchmark suite comparing computed values against
   published references, shared with the test suite.
 - Spatially resolved neutron sources (`SpatialNeutronSource`): radial
   profiles (`RadialProfile`, `PlasmaProfiles`) on Miller-like tokamak flux
