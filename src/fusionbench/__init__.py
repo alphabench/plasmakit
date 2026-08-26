@@ -54,6 +54,7 @@ from fusionbench.spectra import (
     neutron_spectrum,
     neutron_std,
 )
+from fusionbench.surrogates import GaussianProcess, Surrogate
 from fusionbench.uncertainty import (
     SobolIndices,
     UncertainResult,
@@ -71,6 +72,7 @@ __all__ = [
     "Blanket",
     "BlanketResult",
     "Distribution",
+    "GaussianProcess",
     "Layer",
     "Material",
     "NeutronSource",
@@ -84,6 +86,7 @@ __all__ = [
     "SobolIndices",
     "SourceTerms",
     "SpatialNeutronSource",
+    "Surrogate",
     "TallyValue",
     "TokamakGeometry",
     "UncertainResult",

@@ -181,6 +181,14 @@ def _ishigami_indices() -> Any:
     )
 
 
+def _gp_sin_recovery() -> float:
+    from fusionbench.surrogates import GaussianProcess
+
+    x = np.linspace(0.0, 2.0 * np.pi, 12)
+    gp = GaussianProcess.train(x, np.sin(x), seed=0)
+    return float(gp.predict(np.array([1.0]))[0][0])
+
+
 def _demo_blanket() -> Blanket:
     return Blanket(
         layers=(
@@ -397,6 +405,14 @@ CASES: tuple[BenchmarkCase, ...] = (
         unit="",
         rtol=5e-2,
         compute=lambda: _ishigami_indices().first_order["x1"],
+    ),
+    BenchmarkCase(
+        name="GP surrogate recovery of sin(1.0)",
+        reference="Analytic: sin(1.0) = 0.841471 (GP trained on 12 points of sin over [0, 2 pi])",
+        reference_value=float(np.sin(1.0)),
+        unit="",
+        rtol=1e-3,
+        compute=_gp_sin_recovery,
     ),
     BenchmarkCase(
         name="Ishigami first-order index S2",
