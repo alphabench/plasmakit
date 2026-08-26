@@ -11,7 +11,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "alphabench", email = "contact@alphabench.in" }]
 requires-python = ">=3.10"
-dependencies = ["numpy>=2.0"]
+dependencies = ["numpy>=2.0", "scipy>=1.11"]
 keywords = ["fusion", "plasma", "neutronics", "nuclear", "reactivity", "neutron-source"]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -58,7 +58,7 @@ strict = true
 files = ["src"]
 
 [[tool.mypy.overrides]]
-module = ["openmc.*", "xarray.*"]
+module = ["openmc.*", "xarray.*", "scipy", "scipy.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
