@@ -42,6 +42,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   and tritium production, NRT DPA — each with Monte Carlo uncertainty
   and a provenance chain including the nuclear-data library.
 
+- Uncertainty quantification: `Distribution` input specs,
+  `propagate` (scrambled Sobol QMC with a vectorized fast path),
+  `sobol_indices` (Saltelli/Jansen with bootstrap errors, validated on
+  the Ishigami function), and `propagate_transport` folding OpenMC
+  tally variance into the total.
+- Bayesian parameter estimation `fit` (random-walk Metropolis-Hastings
+  with MAP, validated against analytic conjugate posteriors).
+- Gaussian-process surrogates (`GaussianProcess`, `Surrogate`) and
+  global/surrogate-assisted optimization (`optimize`,
+  `optimize_surrogate` wrapping differential evolution).
+
 ### Changed
 
-- NumPy requirement raised to `>=2.0`.
+- NumPy requirement raised to `>=2.0`; SciPy `>=1.11` added.

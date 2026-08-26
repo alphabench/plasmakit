@@ -18,7 +18,7 @@ pip install fusionbench
 uv add fusionbench
 ```
 
-Requires Python ≥ 3.10. The only runtime dependency is NumPy.
+Requires Python ≥ 3.10. Runtime dependencies: NumPy and SciPy.
 
 ## Quickstart
 
@@ -134,6 +134,50 @@ deviation; DPA uses the NRT model (E_d = 40 eV, configurable). OpenMC
 and a cross-section library are required only for `run_neutronics` —
 install OpenMC from conda-forge and point `OPENMC_CROSS_SECTIONS` at a
 data library.
+
+## Uncertainty quantification and optimization
+
+Reactor parameters are never known exactly. Give any input a
+distribution and propagate it through any model — from a fast
+reactivity chain to a full transport calculation:
+
+```python
+import fusionbench as fb
+
+
+def fusion_power(ion_temperature, ion_density):
+    plasma = fb.PlasmaState(ion_temperature, ion_density, fuel={"D": 0.5, "T": 0.5})
+    return fb.fusion_power_density(plasma)
+
+
+result = fb.propagate(
+    fusion_power,
+    {
+        "ion_temperature": fb.Distribution.lognormal(mean=15.0, std=2.0),
+        "ion_density": fb.Distribution.normal(1.0e20, 5.0e18),
+    },
+    n_samples=10_000,
+    vectorized=True,
+)
+result.mean, result.std, result.percentile(95)
+
+indices = fb.sobol_indices(fusion_power, {...})  # which input drives the variance?
+indices.first_order["ion_temperature"]
+```
+
+Through OpenMC transport, tally noise is folded into the total
+uncertainty (`fb.propagate_transport`), so a TBR comes back as
+parametric spread plus Monte Carlo statistics. The toolbox also
+includes Bayesian parameter estimation (`fb.fit`, Metropolis–Hastings
+with analytic-conjugacy validation), Gaussian-process surrogates
+(`fb.Surrogate.from_function` — a drop-in emulator for expensive
+models), and global optimization (`fb.optimize`, differential
+evolution; `fb.optimize_surrogate` for the expensive case, e.g.
+maximizing TBR over Li-6 enrichment in a handful of transport runs).
+
+Every stochastic entry point is seeded and deterministic, and every
+result carries provenance: distribution specs, sampler, estimator
+citations (Saltelli 2010, Rasmussen–Williams 2006, Storn–Price 1997).
 
 ## Validate the physics
 
