@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-from fusionbench import bosch_hale, geometry, materials, neutronics, spectra, uncertainty
+from fusionbench import bosch_hale, geometry, materials, neutronics, spectra, tritium, uncertainty
 from fusionbench.blanket import Blanket, Layer
 from fusionbench.distributions import Distribution
 from fusionbench.geometry import TokamakGeometry
@@ -215,6 +215,80 @@ def _gp_sin_recovery() -> float:
     return float(gp.predict(np.array([1.0]))[0][0])
 
 
+def _decay_superposition() -> float:
+    from fusionbench.tritium import TRITIUM_HALF_LIFE_YEARS, TritiumCycle
+
+    half_life_days = TRITIUM_HALF_LIFE_YEARS * 3.1536e7 / 86_400.0
+    kwargs = dict(burn_rate=1.0e20, tbr=1.1, fractional_burnup=0.05)
+    heavy = TritiumCycle(startup_inventory=2.0, **kwargs)
+    light = TritiumCycle(startup_inventory=1.0, **kwargs)
+    difference = (
+        heavy.simulate(days=half_life_days, n_points=2).inventory("storage")[-1]
+        - light.simulate(days=half_life_days, n_points=2).inventory("storage")[-1]
+    )
+    return float(difference)
+
+
+def _blanket_steady_state() -> float:
+    from fusionbench.tritium import TritiumCycle
+
+    cycle = TritiumCycle(
+        burn_rate=1.0e20,
+        tbr=1.1,
+        fractional_burnup=1.0,
+        startup_inventory=0.0,
+        blanket_residence_days=10.0,
+    )
+    return cycle.steady_state()["blanket"]
+
+
+def _mass_conservation_ratio() -> float:
+    from fusionbench.tritium import TritiumCycle
+
+    history = TritiumCycle(
+        burn_rate=1.0e20,
+        tbr=1.0,
+        fractional_burnup=0.05,
+        startup_inventory=5.0,
+        decay_constant=0.0,
+    ).simulate(days=1000.0)
+    return float(history.total()[-1] / history.total()[0])
+
+
+def _accumulation_slope() -> float:
+    from fusionbench.tritium import TritiumCycle
+
+    history = TritiumCycle(
+        burn_rate=1.0e20,
+        tbr=1.15,
+        fractional_burnup=0.05,
+        startup_inventory=5.0,
+        extraction_efficiency=0.95,
+        processing_loss=0.01,
+        decay_constant=0.0,
+    ).simulate(days=1000.0, n_points=1001)
+    storage = history.inventory("storage")
+    return float((storage[-1] - storage[900]) / (history.times[-1] - history.times[900]))
+
+
+def _linear_doubling_time() -> float:
+    from fusionbench.tritium import TritiumCycle
+
+    cycle = TritiumCycle(
+        burn_rate=1.0e20,
+        tbr=1.15,
+        fractional_burnup=0.05,
+        startup_inventory=1.0,
+        blanket_residence_days=1e-4,
+        exhaust_residence_days=1e-4,
+        processing_residence_days=1e-4,
+        decay_constant=0.0,
+    )
+    result = cycle.doubling_time()
+    assert result is not None
+    return result
+
+
 def _demo_blanket() -> Blanket:
     return Blanket(
         layers=(
@@ -406,6 +480,62 @@ CASES: tuple[BenchmarkCase, ...] = (
         compute=lambda: nrt_dpa_rate(1000.0, 1.0),
     ),
     BenchmarkCase(
+        name="Tritium storage decay over one half-life",
+        reference=(
+            "L.L. Lucas and M.P. Unterweger, J. Res. NIST 105 (2000) 541 "
+            "(t_1/2 = 12.32 y; exact superposition of two startup inventories)"
+        ),
+        reference_value=0.5,
+        unit="kg",
+        rtol=1e-6,
+        compute=_decay_superposition,
+    ),
+    BenchmarkCase(
+        name="Tritium blanket steady-state inventory",
+        reference="Analytic: I_B* = TBR N_b tau_B / (1 + lam tau_B) (Abdou et al. 1986)",
+        reference_value=(
+            1.1
+            * 1.0e20
+            * (10.0 * 86_400.0)
+            / (1.0 + tritium.TRITIUM_DECAY_CONSTANT * 10.0 * 86_400.0)
+            * tritium.KG_PER_ATOM
+        ),
+        unit="kg",
+        rtol=1e-9,
+        compute=_blanket_steady_state,
+    ),
+    BenchmarkCase(
+        name="Tritium mass conservation (TBR=1, lossless, no decay)",
+        reference="Analytic: sources balance withdrawal exactly at TBR = 1",
+        reference_value=1.0,
+        unit="",
+        rtol=1e-9,
+        compute=_mass_conservation_ratio,
+    ),
+    BenchmarkCase(
+        name="Tritium net accumulation rate at steady state",
+        reference=(
+            "Analytic (lam=0): a = [(1-eps)(eta TBR + (1-f_b)/f_b) - 1/f_b] N_b (Abdou et al. 1986)"
+        ),
+        reference_value=(
+            (0.99 * (0.95 * 1.15 + 0.95 / 0.05) - 20.0) * 1.0e20 * tritium.KG_PER_ATOM * 86_400.0
+        ),
+        unit="kg/day",
+        rtol=1e-6,
+        compute=_accumulation_slope,
+    ),
+    BenchmarkCase(
+        name="Tritium doubling time (linear-accumulation limit)",
+        reference=(
+            "Analytic: t_d = startup / [(TBR-1) N_b] for a fast lossless decay-free "
+            "pipeline (Abdou et al. 1986)"
+        ),
+        reference_value=1.0 / tritium.KG_PER_ATOM / (0.15 * 1.0e20) / 86_400.0,
+        unit="days",
+        rtol=1e-3,
+        compute=_linear_doubling_time,
+    ),
+    BenchmarkCase(
         name="QMC propagation mean (identity, N(10, 2))",
         reference="Analytic: mean of the identity map equals the input mean",
         reference_value=10.0,
@@ -527,6 +657,7 @@ def validate(verbose: bool = True) -> BenchmarkReport:
                 neutronics.MODEL_ID,
                 uncertainty.MODEL_ID,
                 uncertainty.SALTELLI_MODEL_ID,
+                tritium.MODEL_ID,
             ],
             inputs={"cases": len(CASES)},
         ),
