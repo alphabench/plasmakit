@@ -25,6 +25,9 @@ ArrayLike: TypeAlias = float | npt.NDArray[np.float64]
 KEV_TO_JOULE: Final = 1.602176634e-16
 """Exact conversion factor, J/keV (SI definition of the electronvolt)."""
 
+AVOGADRO: Final = 6.02214076e23
+"""Avogadro constant, 1/mol (exact, SI 2019)."""
+
 MILLIBARN_TO_M2: Final = 1.0e-31
 
 NEUTRON_MASS_KEV: Final = 939_565.42052

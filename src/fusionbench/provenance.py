@@ -18,6 +18,10 @@ MODEL_REFERENCES: Mapping[str, str] = MappingProxyType(
         "brysk-1973": (
             "H. Brysk, 'Fusion neutron energies and spectra', Plasma Physics 15 (1973) 611"
         ),
+        "ciaaw-2021": (
+            "T. Prohaska et al., 'Standard atomic weights of the elements 2021 "
+            "(IUPAC Technical Report)', Pure and Applied Chemistry 94 (2022) 573"
+        ),
         "miller-1998": (
             "R.L. Miller, M.S. Chu, J.M. Greene, Y.R. Lin-Liu and R.E. Waltz, "
             "'Noncircular, finite aspect ratio, local equilibrium model', "
