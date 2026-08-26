@@ -168,7 +168,7 @@ def _identity_propagation() -> Any:
 def _ishigami_indices() -> Any:
     from fusionbench.uncertainty import sobol_indices
 
-    def ishigami(x1: np.ndarray, x2: np.ndarray, x3: np.ndarray) -> np.ndarray:
+    def ishigami(x1: Any, x2: Any, x3: Any) -> Any:
         return np.sin(x1) + 7.0 * np.sin(x2) ** 2 + 0.1 * x3**4 * np.sin(x1)
 
     bounds = Distribution.uniform(-np.pi, np.pi)

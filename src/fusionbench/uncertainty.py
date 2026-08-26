@@ -276,7 +276,7 @@ def sobol_indices(
     boot_first = np.empty((n_bootstrap, d))
     boot_total = np.empty((n_bootstrap, d))
     for k in range(n_bootstrap):
-        rows = rng.integers(0, n, size=n)
+        rows = np.asarray(rng.integers(0, n, size=n), dtype=np.intp)
         boot_first[k], boot_total[k] = indices(rows)
 
     provenance = _sampling_provenance(
