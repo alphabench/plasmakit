@@ -1,4 +1,5 @@
 import json
+import os
 
 import numpy as np
 import pytest
@@ -267,6 +268,83 @@ def test_required_startup_monotone_in_tbr(tbr):
     assert needed(tbr + 0.05) <= needed(tbr) * (1.0 + 1e-9) + 1e-12
 
 
+def test_from_fusion_power():
+    from fusionbench.constants import KEV_TO_JOULE
+    from fusionbench.reactions import REACTIONS
+
+    cycle = TritiumCycle.from_fusion_power(
+        500.0, tbr=1.1, fractional_burnup=0.05, startup_inventory=5.0
+    )
+    expected = 500.0e6 / (REACTIONS["DT"].q_value * KEV_TO_JOULE)
+    assert cycle.burn_rate == pytest.approx(expected, rel=1e-12)
+    with pytest.raises(FusionbenchError):
+        TritiumCycle.from_fusion_power(-1.0, tbr=1.1, fractional_burnup=0.05, startup_inventory=5.0)
+
+
+def test_from_blanket_result():
+    from fusionbench.blanket import Blanket, Layer
+    from fusionbench.materials import eurofer97, li4sio4
+    from fusionbench.neutronics import BlanketResult
+
+    blanket = Blanket(
+        layers=(
+            Layer("first_wall", eurofer97(), 0.02),
+            Layer("breeder", li4sio4(li6_enrichment=0.6), 0.5),
+        ),
+        major_radius=6.0,
+        first_wall_radius=2.0,
+    )
+    result = BlanketResult.from_tallies(
+        blanket=blanket,
+        total_rate=2.0e20,
+        particles=1000,
+        batches=5,
+        seed=1,
+        h3_per_layer=[(0.02, 0.001), (1.05, 0.02)],
+        heating_ev_per_layer=[(1.0e6, 1.0e4), (1.4e7, 1.0e5)],
+        damage_energy_ev=(5.0e5, 1.0e4),
+        wall_current=(np.array([14.07e6]), np.array([1.0]), np.array([0.05])),
+    )
+    cycle = TritiumCycle.from_blanket_result(result, fractional_burnup=0.05, startup_inventory=5.0)
+    assert cycle.burn_rate == 2.0e20
+    assert cycle.tbr == pytest.approx(1.07)
+    assert cycle.self_sufficient
+
+
+def test_uq_pattern_over_cycle_parameters():
+    from fusionbench.distributions import Distribution
+    from fusionbench.uncertainty import propagate
+
+    def required(tbr, fractional_burnup):
+        return TritiumCycle(
+            burn_rate=1e20,
+            tbr=tbr,
+            fractional_burnup=fractional_burnup,
+            startup_inventory=0.0,
+        ).required_startup_inventory(days=365.0)
+
+    result = propagate(
+        required,
+        {
+            "tbr": Distribution.normal(1.05, 0.02),
+            "fractional_burnup": Distribution.uniform(0.01, 0.05),
+        },
+        n_samples=64,
+        seed=0,
+    )
+    assert np.isfinite(result.mean) and result.mean > 0.0
+    repeat = propagate(
+        required,
+        {
+            "tbr": Distribution.normal(1.05, 0.02),
+            "fractional_burnup": Distribution.uniform(0.01, 0.05),
+        },
+        n_samples=64,
+        seed=0,
+    )
+    assert np.array_equal(result.samples, repeat.samples)
+
+
 def test_provenance_and_to_dict(cycle):
     assert set(cycle.provenance.models) == {
         "abdou-1986",
@@ -275,3 +353,41 @@ def test_provenance_and_to_dict(cycle):
     }
     json.dumps(cycle.to_dict())
     assert cycle.provenance.inputs["tbr"] == 1.1
+
+
+# --- Transport integration ---------------------------------------------------
+
+needs_data = pytest.mark.skipif(
+    not os.environ.get("OPENMC_CROSS_SECTIONS"), reason="OPENMC_CROSS_SECTIONS not set"
+)
+
+
+@pytest.mark.transport
+@needs_data
+def test_fuel_cycle_from_transport():
+    pytest.importorskip("openmc")
+    from fusionbench.blanket import Blanket, Layer
+    from fusionbench.materials import eurofer97, li4sio4
+    from fusionbench.plasma import PlasmaState
+
+    blanket = Blanket(
+        layers=(
+            Layer("first_wall", eurofer97(), 0.02),
+            Layer("breeder", li4sio4(), 0.5),  # natural lithium: TBR < 1
+        ),
+        major_radius=9.0,
+        first_wall_radius=2.9,
+    )
+    plasma = PlasmaState(ion_temperature=15.0, ion_density=1.0e20, fuel={"D": 0.5, "T": 0.5})
+    result = blanket.run_neutronics(plasma, particles=5000, batches=5, seed=1, source_rate=1.0e20)
+    assert result.tbr.value < 1.0
+    cycle = TritiumCycle.from_blanket_result(result, fractional_burnup=0.02, startup_inventory=5.0)
+    assert not cycle.self_sufficient
+    assert cycle.doubling_time() is None
+    one_year = TritiumCycle.from_blanket_result(
+        result, fractional_burnup=0.02, startup_inventory=0.0
+    ).required_startup_inventory(days=365.0)
+    ten_years = TritiumCycle.from_blanket_result(
+        result, fractional_burnup=0.02, startup_inventory=0.0
+    ).required_startup_inventory(days=3650.0)
+    assert 0.0 < one_year < ten_years

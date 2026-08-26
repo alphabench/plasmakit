@@ -190,6 +190,61 @@ class TritiumCycle:
         if self.decay_constant < 0.0:
             raise FusionbenchError("decay_constant must be non-negative (1/s)")
 
+    @classmethod
+    def from_fusion_power(cls, power_mw: float, **kwargs: float) -> TritiumCycle:
+        """Build a cycle from a D-T fusion power.
+
+        ``burn_rate = P / Q_DT`` with the registry Q value (17.589 MeV
+        per reaction); "fusion power" excludes blanket exothermics.
+
+        Parameters
+        ----------
+        power_mw : float
+            D-T fusion power, MW.
+        **kwargs
+            Remaining :class:`TritiumCycle` parameters (tbr,
+            fractional_burnup, startup_inventory, ...).
+        """
+        from fusionbench.constants import KEV_TO_JOULE
+        from fusionbench.reactions import REACTIONS
+
+        if power_mw <= 0.0:
+            raise FusionbenchError("power_mw must be positive")
+        burn_rate = power_mw * 1.0e6 / (REACTIONS["DT"].q_value * KEV_TO_JOULE)
+        return cls(burn_rate=burn_rate, **kwargs)
+
+    @classmethod
+    def from_blanket_result(
+        cls,
+        result: Any,
+        *,
+        fractional_burnup: float,
+        startup_inventory: float,
+        **kwargs: float,
+    ) -> TritiumCycle:
+        """Build a cycle from a blanket neutronics result.
+
+        Wires ``burn_rate = result.total_rate`` (every D-T source neutron
+        burns one triton — the documented assumption that the source is
+        pure D-T) and ``tbr = result.tbr.value``.
+
+        Parameters
+        ----------
+        result : BlanketResult
+            Output of :meth:`fusionbench.blanket.Blanket.run_neutronics`.
+        fractional_burnup, startup_inventory
+            Required cycle parameters not derivable from neutronics.
+        **kwargs
+            Remaining :class:`TritiumCycle` parameters.
+        """
+        return cls(
+            burn_rate=float(result.total_rate),
+            tbr=float(result.tbr.value),
+            fractional_burnup=fractional_burnup,
+            startup_inventory=startup_inventory,
+            **kwargs,
+        )
+
     def _system(self) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """Build the LTI system ``(A [1/s], b [atoms/s])`` over :data:`COMPARTMENTS`."""
         lam = self.decay_constant
