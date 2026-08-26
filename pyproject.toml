@@ -64,4 +64,5 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
+markers = ["transport: requires openmc plus nuclear data (OPENMC_CROSS_SECTIONS)"]
 filterwarnings = ["error::fusionbench.errors.ValidityRangeWarning"]

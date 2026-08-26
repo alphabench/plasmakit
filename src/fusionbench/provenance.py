@@ -22,6 +22,15 @@ MODEL_REFERENCES: Mapping[str, str] = MappingProxyType(
             "T. Prohaska et al., 'Standard atomic weights of the elements 2021 "
             "(IUPAC Technical Report)', Pure and Applied Chemistry 94 (2022) 573"
         ),
+        "nrt-1975": (
+            "M.J. Norgett, M.T. Robinson and I.M. Torrens, 'A proposed method of "
+            "calculating displacement dose rates', Nuclear Engineering and Design 33 (1975) 50"
+        ),
+        "openmc-2015": (
+            "P.K. Romano, N.E. Horelik, B.R. Herman, A.G. Nelson, B. Forget and K. Smith, "
+            "'OpenMC: A state-of-the-art Monte Carlo code for research and development', "
+            "Annals of Nuclear Energy 82 (2015) 90"
+        ),
         "miller-1998": (
             "R.L. Miller, M.S. Chu, J.M. Greene, Y.R. Lin-Liu and R.E. Waltz, "
             "'Noncircular, finite aspect ratio, local equilibrium model', "
