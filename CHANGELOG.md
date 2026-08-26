@@ -22,3 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   citations, JSON round-trip.
 - `fusionbench.validate()`: benchmark suite comparing computed values against
   published references, shared with the test suite.
+- Spatially resolved neutron sources (`SpatialNeutronSource`): radial
+  profiles (`RadialProfile`, `PlasmaProfiles`) on Miller-like tokamak flux
+  surfaces (`TokamakGeometry`, Phys. Plasmas 5 (1998) 973) or 2-D R-Z
+  fields, with cell-resolved emissivity, power density, and volumes
+  validated against analytic torus integrals.
+- Exporters: `to_openmc()` (weighted ring sources with local Brysk
+  spectra; openmc via conda), `to_xarray()` (optional `[xarray]` extra),
+  and `to_vtk()` (pure-NumPy legacy VTK writer).
+- Vectorized `neutron_std` alongside `neutron_mean_energy`.
+
+### Changed
+
+- NumPy requirement raised to `>=2.0`.

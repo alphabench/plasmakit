@@ -53,6 +53,47 @@ sigma_v = fb.maxwellian_reactivity("DT", temperatures)  # m^3/s, shape (500,)
 sigma = fb.cross_section("DT", 64.0)  # m^2 at 64 keV (CM)
 ```
 
+## Spatial sources
+
+Real plasmas are not points. Build a spatially resolved neutron source from
+radial profiles on parameterized tokamak flux surfaces (Miller geometry with
+elongation, triangularity, and Shafranov shift), or from 2-D R-Z fields:
+
+```python
+import fusionbench as fb
+
+profiles = fb.PlasmaProfiles(
+    ion_temperature=fb.RadialProfile.parabolic(20.0, 1.0),  # keV, core -> edge
+    ion_density=fb.RadialProfile.parabolic(1.0e20, 1.0e18),  # m^-3
+)
+geometry = fb.TokamakGeometry(
+    major_radius=6.0, minor_radius=2.0, elongation=1.7, triangularity=0.33
+)
+
+source = fb.SpatialNeutronSource.from_profiles(profiles, geometry)
+
+source.total_rate  # neutrons / s
+source.total_fusion_power  # W
+source.emissivity  # neutron emissivity field, m^-3 s^-1
+```
+
+Export it where you need it:
+
+```python
+source.to_openmc()  # weighted openmc.IndependentSource rings (needs openmc)
+source.to_xarray()  # labeled xarray.Dataset  (pip install fusionbench[xarray])
+source.to_vtk("source.vtk")  # ParaView/VisIt, no VTK dependency needed
+```
+
+The OpenMC export creates one axisymmetric ring source per cell and
+reaction, each carrying the local thermally broadened (Brysk) energy
+spectrum — so the hot core emits harder, wider neutrons than the edge, and
+first-wall load calculations see a realistic source instead of an idealized
+ring. OpenMC itself is not on PyPI; install it via conda-forge.
+
+Users with equilibrium-code output can use
+`SpatialNeutronSource.from_rz(r_edges, z_edges, T_field, n_field)` instead.
+
 ## Validate the physics
 
 Every physics model in the package ships with a benchmark suite comparing
@@ -80,6 +121,7 @@ report.to_json()  # citable machine-readable record
 | Fusion power density and neutron/charged split | `fusion_power_density`, `power_partition` | two-body kinematics |
 | Neutron mean energy and thermally broadened spectrum | `neutron_spectrum`, `neutron_mean_energy` | Brysk (1973) |
 | Neutron source summary with provenance | `NeutronSource` | all of the above |
+| Spatial emissivity fields and exportable sources | `SpatialNeutronSource` | Miller flux surfaces / R-Z mesh |
 
 Supported reactions: **D-T**, **D-D** (both branches), **D-³He**. Q values and
 product birth energies are derived from CODATA 2018 nuclide masses, not
@@ -107,8 +149,9 @@ those ranges the package still returns the fit's value but emits a
 
 ## Scope and limitations (v0.1)
 
-- 0-D Maxwellian plasmas (arrays of point values are supported; spatial
-  geometry is not — yet).
+- Maxwellian plasmas: 0-D states, radial profiles on prescribed Miller
+  flux surfaces, or user-supplied R-Z fields. Grad–Shafranov equilibria
+  and EQDSK input are not read — yet.
 - Thermonuclear reactivities only; no beam–target or non-Maxwellian effects.
 - Neutron spectra are Gaussian (Brysk); relativistic/asymmetric corrections
   (Ballabio 1998) are planned.
@@ -121,6 +164,9 @@ those ranges the package still returns the fit's value but emits a
   thermal reactivities", *Nuclear Fusion* **32** (1992) 611.
 - H. Brysk, "Fusion neutron energies and spectra", *Plasma Physics* **15**
   (1973) 611.
+- R.L. Miller, M.S. Chu, J.M. Greene, Y.R. Lin-Liu and R.E. Waltz,
+  "Noncircular, finite aspect ratio, local equilibrium model",
+  *Physics of Plasmas* **5** (1998) 973.
 
 ## Development
 

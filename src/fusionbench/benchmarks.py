@@ -13,12 +13,15 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from fusionbench import bosch_hale, spectra
+from fusionbench import bosch_hale, geometry, spectra
+from fusionbench.geometry import TokamakGeometry
 from fusionbench.plasma import PlasmaState
+from fusionbench.profiles import PlasmaProfiles, RadialProfile
 from fusionbench.provenance import Provenance, build_provenance
 from fusionbench.rates import fusion_power_density
 from fusionbench.reactions import REACTIONS
 from fusionbench.reactivity import maxwellian_reactivity
+from fusionbench.spatial import SpatialNeutronSource
 from fusionbench.spectra import neutron_spectrum
 
 _BOSCH_HALE = "H.-S. Bosch and G.M. Hale, Nucl. Fusion 32 (1992) 611"
@@ -145,6 +148,31 @@ def _dt_power_density() -> float:
     return float(fusion_power_density(state, reactions=["DT"]))
 
 
+def _flat_profiles(density_center: float = 1.0e20, density_edge: float = 1.0e20) -> PlasmaProfiles:
+    return PlasmaProfiles(
+        ion_temperature=RadialProfile.parabolic(10.0, 10.0),
+        ion_density=RadialProfile.parabolic(density_center, density_edge),
+    )
+
+
+def _flat_profile_dt_rate() -> float:
+    source = SpatialNeutronSource.from_profiles(
+        _flat_profiles(), TokamakGeometry(major_radius=6.0, minor_radius=2.0)
+    )
+    return float(np.sum(source.emissivity_by_reaction["DT"] * source.volume))
+
+
+def _parabolic_density_dt_rate() -> float:
+    profiles = PlasmaProfiles(
+        ion_temperature=RadialProfile.parabolic(10.0, 10.0),
+        ion_density=RadialProfile.from_callable(lambda rho: 1.0e20 * (1.0 - 0.99 * rho**2)),
+    )
+    source = SpatialNeutronSource.from_profiles(
+        profiles, TokamakGeometry(major_radius=6.0, minor_radius=2.0), n_rho=256
+    )
+    return float(np.sum(source.emissivity_by_reaction["DT"] * source.volume))
+
+
 CASES: tuple[BenchmarkCase, ...] = (
     _reactivity_case("DT", 1.0, 6.857e-27),
     _reactivity_case("DT", 10.0, 1.136e-22),
@@ -218,6 +246,49 @@ CASES: tuple[BenchmarkCase, ...] = (
         rtol=2e-2,
         compute=_dt_power_density,
     ),
+    BenchmarkCase(
+        name="Circular torus volume (R0=6 m, a=2 m)",
+        reference="Analytic torus volume V = 2 pi^2 R0 a^2",
+        reference_value=2.0 * np.pi**2 * 6.0 * 4.0,
+        unit="m^3",
+        rtol=1e-3,
+        compute=lambda: TokamakGeometry(major_radius=6.0, minor_radius=2.0).volume(),
+    ),
+    BenchmarkCase(
+        name="Elliptical torus volume (kappa=1.7)",
+        reference="Analytic torus volume V = 2 pi^2 R0 a^2 kappa",
+        reference_value=2.0 * np.pi**2 * 6.0 * 4.0 * 1.7,
+        unit="m^3",
+        rtol=1e-3,
+        compute=lambda: TokamakGeometry(
+            major_radius=6.0, minor_radius=2.0, elongation=1.7
+        ).volume(),
+    ),
+    BenchmarkCase(
+        name="Flat-profile total DT rate (circular torus)",
+        reference=f"Hand calculation: (n^2/4) <sigma*v> V with Table VIII value ({_BOSCH_HALE})",
+        reference_value=0.25e40 * 1.136e-22 * 2.0 * np.pi**2 * 6.0 * 4.0,
+        unit="1/s",
+        rtol=1e-2,
+        compute=_flat_profile_dt_rate,
+    ),
+    BenchmarkCase(
+        name="Parabolic-density total DT rate",
+        reference=(
+            "Hand calculation: closed-form integral of n0^2(1 - c rho^2)^2 over a circular "
+            "torus, factor (1 - c + c^2/3)"
+        ),
+        reference_value=0.25e40
+        * 1.136e-22
+        * 2.0
+        * np.pi**2
+        * 6.0
+        * 4.0
+        * (1.0 - 0.99 + 0.99**2 / 3.0),
+        unit="1/s",
+        rtol=1e-2,
+        compute=_parabolic_density_dt_rate,
+    ),
 )
 """Registry of benchmark cases, shared by :func:`validate` and the test suite."""
 
@@ -250,7 +321,7 @@ def validate(verbose: bool = True) -> BenchmarkReport:
     report = BenchmarkReport(
         results=tuple(run_case(case) for case in CASES),
         provenance=build_provenance(
-            models=[bosch_hale.MODEL_ID, spectra.MODEL_ID],
+            models=[bosch_hale.MODEL_ID, spectra.MODEL_ID, geometry.MODEL_ID],
             inputs={"cases": len(CASES)},
         ),
     )

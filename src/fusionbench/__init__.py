@@ -13,13 +13,26 @@ Quickstart
 >>> rate = source.rate_density()          # neutrons / m^3 / s
 >>> energy = source.mean_energy()         # keV, ~14070 for D-T
 
+Spatially resolved sources from radial profiles on flux surfaces:
+
+>>> profiles = fb.PlasmaProfiles(
+...     ion_temperature=fb.RadialProfile.parabolic(20.0, 1.0),
+...     ion_density=fb.RadialProfile.parabolic(1.0e20, 1.0e18),
+... )
+>>> geometry = fb.TokamakGeometry(major_radius=6.0, minor_radius=2.0,
+...                               elongation=1.7, triangularity=0.33)
+>>> spatial = fb.SpatialNeutronSource.from_profiles(profiles, geometry)
+>>> total = spatial.total_rate            # neutrons / s
+
 Units: temperatures and energies in keV, densities in m^-3, cross sections
-in m^2, reactivities in m^3/s, power densities in W/m^3.
+in m^2, reactivities in m^3/s, power densities in W/m^3, lengths in m.
 """
 
 from fusionbench.benchmarks import BenchmarkReport, validate
 from fusionbench.cross_sections import cross_section
+from fusionbench.geometry import TokamakGeometry
 from fusionbench.plasma import PlasmaState
+from fusionbench.profiles import PlasmaProfiles, RadialProfile
 from fusionbench.provenance import Provenance
 from fusionbench.rates import (
     PowerPartition,
@@ -30,7 +43,13 @@ from fusionbench.rates import (
 from fusionbench.reactions import REACTIONS, Reaction
 from fusionbench.reactivity import maxwellian_reactivity
 from fusionbench.sources import NeutronSource
-from fusionbench.spectra import NeutronSpectrum, neutron_mean_energy, neutron_spectrum
+from fusionbench.spatial import SourceTerms, SpatialNeutronSource
+from fusionbench.spectra import (
+    NeutronSpectrum,
+    neutron_mean_energy,
+    neutron_spectrum,
+    neutron_std,
+)
 
 __version__ = "0.1.0"
 
@@ -39,16 +58,22 @@ __all__ = [
     "BenchmarkReport",
     "NeutronSource",
     "NeutronSpectrum",
+    "PlasmaProfiles",
     "PlasmaState",
     "PowerPartition",
     "Provenance",
+    "RadialProfile",
     "Reaction",
+    "SourceTerms",
+    "SpatialNeutronSource",
+    "TokamakGeometry",
     "__version__",
     "cross_section",
     "fusion_power_density",
     "maxwellian_reactivity",
     "neutron_mean_energy",
     "neutron_spectrum",
+    "neutron_std",
     "power_partition",
     "reaction_rate_density",
     "validate",
